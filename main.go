@@ -8,8 +8,6 @@ import (
 	"strings"
 
 	"github.com/gertm/hardsub/subfix"
-	// "github.com/pixelbender/go-matroska/matroska"
-	// "github.com/sanity-io/litter"
 )
 
 var (
