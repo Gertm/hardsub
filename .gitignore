@@ -1,0 +1,12 @@
+convert.sh
+*.ass
+*.mkv
+.idea/
+mkvinfo.txt
+cmd/fixsubs/fixsubs
+*.srt
+cmd/hardcodesubs/hardcodesubs
+
+hardcodesubs
+README.md.bak
+hardsub
