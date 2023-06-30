@@ -138,3 +138,9 @@ func DoubleSpeedFile(input string, output string) error {
 	ffmpegArgs := fmt.Sprintf("-i %s -filter_complex [0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a] -map [v] -map [a] %s", input, output)
 	return RunAndParseFfmpeg(ffmpegArgs, inputProps)
 }
+
+/* 1.5x
+ffmpeg -i $f -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264
+ffmpeg -fflags +genpts -r 36 -i raw.h264 -i $f -map 0:v -c:v copy -map 1:a -af atempo=1.5 -movflags faststart FAST_$f
+rm raw.h264
+*/
