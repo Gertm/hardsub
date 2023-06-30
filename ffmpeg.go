@@ -135,7 +135,6 @@ func RunAndParseFfmpeg(args string, prop VideoProperties) error {
 
 func FastFile(input string, output string) error {
 	inputProps := GetVideoPropertiesWithFFProbe(input)
-	inputProps.NrOfVideoFrames = inputProps.NrOfVideoFrames / 2
 	firstPassArgs := fmt.Sprintf("-i %s -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264", input)
 	defer os.RemoveAll("raw.h264")
 	err := RunAndParseFfmpeg(firstPassArgs, inputProps)

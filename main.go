@@ -129,7 +129,7 @@ func convert_file(videofile string, config Config) {
 	}
 	if config.FastVersion {
 		fastOutputFile := strings.ReplaceAll(outputFile, path.Base(outputFile), "FAST_"+path.Base(outputFile))
-		fmt.Println("Creating", fastOutputFile)
+		fmt.Println(">>>>>>>>> Creating", fastOutputFile, ">>>>>>>>>>>")
 		if err := FastFile(outputFile, fastOutputFile); err != nil {
 			fmt.Println(err)
 		}
