@@ -2,16 +2,16 @@ package main
 
 import (
 	"io/fs"
-	"os"
+	// "os"
 	"time"
 )
 
 type Config struct {
-	AudioLang       string
-	ScriptPath      string
-	SubsLang        string
-	SubsName        string
-	ScriptFile      *os.File
+	AudioLang  string
+	ScriptPath string
+	SubsLang   string
+	SubsName   string
+	// ScriptFile      *os.File
 	TargetFolder    string
 	OriginalsFolder string
 	ExtractFonts    bool
@@ -33,8 +33,10 @@ type Config struct {
 	DoubleSpeed     bool
 }
 
-type SubsType int
-type MappedTracks []int
+type (
+	SubsType     int
+	MappedTracks []int
+)
 
 const (
 	SRT SubsType = iota

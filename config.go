@@ -3,11 +3,12 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/sanity-io/litter"
 	"log"
 	"os"
 	"path"
 	"strings"
+
+	"github.com/sanity-io/litter"
 )
 
 func getConfigurationFromArguments() Config {
@@ -15,7 +16,7 @@ func getConfigurationFromArguments() Config {
 	proposedConvertedDir := path.Join(workdir, "converted")
 	folder := flag.String("folder", workdir, "The folder to convert all mkvs in. Defaults to the working directory.")
 	detox := flag.Bool("detox", true, "Detox the mkv files in the directory first.")
-	detoxRemove := flag.String("removewords", "", "Remove the words in the comma separated value you specify.")
+	detoxRemove := flag.String("removewords", "SubsPlease,EMBER", "Remove the words in the comma separated value you specify.")
 	extension := flag.String("ext", "mkv", "Look for files of this extension to convert.")
 	subslang := flag.String("subslang", "en", "The subs language you want to use. (IETF language tag)")
 	subsname := flag.String("subsname", "subtitles", "What the subs name needs to contains.")
@@ -77,7 +78,8 @@ func getConfigurationFromArguments() Config {
 		log.Fatal(err)
 	}
 
-	config := Config{SubsLang: *subslang,
+	config := Config{
+		SubsLang:        *subslang,
 		AudioLang:       *audiolang,
 		SubsName:        *subsname,
 		TargetFolder:    *targetfolder,
