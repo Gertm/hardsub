@@ -35,14 +35,14 @@ func main() {
 // TODO: This needs to be split up in smaller chunks, it's way too big now.
 func convert_file(videofile string, config Config) {
 	Log("Converting", videofile)
-	if config.DoubleSpeed {
-		createDirectoryIfNeeded(config.TargetFolder)
-		outputFile := path.Join(config.TargetFolder, "DOUBLE_"+path.Base(videofile))
-		if err := DoubleSpeedFile(videofile, outputFile); err != nil {
-			fmt.Println("Couldn't double the speed of", videofile, err)
-		}
-		return
-	}
+	// if config.FastVersion {
+	// 	createDirectoryIfNeeded(config.TargetFolder)
+	// 	outputFile := path.Join(config.TargetFolder, "FAST_"+path.Base(videofile))
+	// 	if err := FastFile(videofile, outputFile); err != nil {
+	// 		fmt.Println("Couldn't double the speed of", videofile, err)
+	// 	}
+	// 	return
+	// }
 	output, err := SelectTracksWithMkvMerge(videofile, config)
 	if err != nil {
 		log.Fatal(err)
@@ -126,6 +126,13 @@ func convert_file(videofile string, config Config) {
 		Log("Convert Command:", "ffmpeg", convertCmd)
 		fmt.Println("Starting re-encoding...")
 		RunAndParseFfmpeg(convertCmd, vProps)
+	}
+	if config.FastVersion {
+		fastOutputFile := strings.ReplaceAll(outputFile, path.Base(outputFile), "FAST_"+path.Base(outputFile))
+		fmt.Println("Creating", fastOutputFile)
+		if err := FastFile(outputFile, fastOutputFile); err != nil {
+			fmt.Println(err)
+		}
 	}
 	if config.OriginalsFolder != config.TargetFolder {
 		if err := createDirectoryIfNeeded(config.OriginalsFolder); err == nil {

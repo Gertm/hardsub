@@ -30,7 +30,7 @@ func getConfigurationFromArguments() Config {
 	crf := flag.Int("crf", 18, "Constant Rate Factor setting for ffmpeg.")
 	firstOnly := flag.Bool("first-only", false, "Only convert the first file. (For testing purposes)")
 	forOldDevices := flag.Bool("for-old-devices", false, "Use ffmpeg flags to get widest compatibility.")
-	doubleSpeed := flag.Bool("doublespeed", false, "Don't convert or hardsub, just make a version of the video that goes double the speed.")
+	fastVersion := flag.Bool("fastversion", false, "Do a second and third pass, making a video at 1.5x the speed.")
 	mp4Output := flag.Bool(
 		"mp4",
 		true,
@@ -95,7 +95,7 @@ func getConfigurationFromArguments() Config {
 		FilesToConvert:  files,
 		KeepSubs:        *keepSubsAfter,
 		CleanupSubs:     *cleanupSubs,
-		DoubleSpeed:     *doubleSpeed,
+		FastVersion:     *fastVersion,
 		Crf:             *crf,
 		ForOldDevices:   *forOldDevices,
 		Extension:       *extension,

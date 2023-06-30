@@ -30,7 +30,7 @@ type Config struct {
 	Crf             int
 	ForOldDevices   bool
 	Extension       string
-	DoubleSpeed     bool
+	FastVersion     bool
 }
 
 type (

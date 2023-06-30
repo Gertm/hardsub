@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -132,10 +133,16 @@ func RunAndParseFfmpeg(args string, prop VideoProperties) error {
 	return nil
 }
 
-func DoubleSpeedFile(input string, output string) error {
+func FastFile(input string, output string) error {
 	inputProps := GetVideoPropertiesWithFFProbe(input)
 	inputProps.NrOfVideoFrames = inputProps.NrOfVideoFrames / 2
-	ffmpegArgs := fmt.Sprintf("-i %s -filter_complex [0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a] -map [v] -map [a] %s", input, output)
+	firstPassArgs := fmt.Sprintf("-i %s -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264", input)
+	defer os.RemoveAll("raw.h264")
+	err := RunAndParseFfmpeg(firstPassArgs, inputProps)
+	if err != nil {
+		return err
+	}
+	ffmpegArgs := fmt.Sprintf("-fflags +genpts -r 36 -i raw.h264 -i %s -map 0:v -c:v copy -map 1:a -af atempo=1.5 -movflags faststart %s", input, output)
 	return RunAndParseFfmpeg(ffmpegArgs, inputProps)
 }
 
