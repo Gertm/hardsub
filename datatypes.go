@@ -31,6 +31,7 @@ type Config struct {
 	ForOldDevices   bool
 	Extension       string
 	FastVersion     bool
+	KeepSlowVersion bool
 }
 
 type (

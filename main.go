@@ -132,7 +132,15 @@ func convert_file(videofile string, config Config) {
 		fmt.Println(">>>>>>>>> Creating", fastOutputFile, ">>>>>>>>>>>")
 		if err := FastFile(outputFile, fastOutputFile); err != nil {
 			fmt.Println(err)
+			if !config.KeepSlowVersion {
+				fmt.Println("Keeping normal speed version because creating the fast version failed.")
+			}
+		} else {
+			if !config.KeepSlowVersion {
+				os.RemoveAll(outputFile)
+			}
 		}
+
 	}
 	if config.OriginalsFolder != config.TargetFolder {
 		if err := createDirectoryIfNeeded(config.OriginalsFolder); err == nil {

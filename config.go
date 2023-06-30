@@ -31,6 +31,7 @@ func getConfigurationFromArguments() Config {
 	firstOnly := flag.Bool("first-only", false, "Only convert the first file. (For testing purposes)")
 	forOldDevices := flag.Bool("for-old-devices", false, "Use ffmpeg flags to get widest compatibility.")
 	fastVersion := flag.Bool("fastversion", false, "Do a second and third pass, making a video at 1.5x the speed.")
+	keepSlowVersion := flag.Bool("keep-slow", false, "In case you're making fast versions, keep the slow versions as well.")
 	mp4Output := flag.Bool(
 		"mp4",
 		true,
@@ -96,6 +97,7 @@ func getConfigurationFromArguments() Config {
 		KeepSubs:        *keepSubsAfter,
 		CleanupSubs:     *cleanupSubs,
 		FastVersion:     *fastVersion,
+		KeepSlowVersion: *keepSlowVersion,
 		Crf:             *crf,
 		ForOldDevices:   *forOldDevices,
 		Extension:       *extension,
