@@ -13,14 +13,13 @@ import (
 )
 
 type Config struct {
-	AudioLang  string
-	ScriptPath string
-	SubsLang   string
-	SubsName   string
-	// ScriptFile      *os.File
+	AudioLang       string
+	ScriptPath      string
+	SubsLang        string
+	SubsName        string
 	TargetFolder    string
 	OriginalsFolder string
-	Extractfonts    bool
+	ExtractFonts    bool
 	FirstOnly       bool
 	Mp4             bool
 	H26xTune        string
