@@ -6,8 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/hashicorp/go-multierror"
 )
 
 func addEnvironment(c *exec.Cmd, envStr string) {
@@ -89,13 +87,4 @@ func WriteBashScriptForCommand(filename, cmd string) error {
 	f.WriteString("set -e\n")
 	f.WriteString(cmd + "\n")
 	return nil
-}
-
-func ExecuteMultipleCommands(cmds []string) error {
-	var result *multierror.Error
-	for _, cmd := range cmds {
-		fmt.Println("Running ", cmd)
-		result = multierror.Append(result, ExecuteCommand(cmd))
-	}
-	return result.ErrorOrNil()
 }
