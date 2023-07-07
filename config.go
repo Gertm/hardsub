@@ -3,13 +3,59 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path"
 	"strings"
 
+	"github.com/cristalhq/aconfig"
+	"github.com/cristalhq/aconfig/aconfigtoml"
 	"github.com/sanity-io/litter"
 )
+
+type Config struct {
+	AudioLang       string `default:"ja" usage:"The audio language you want to use. (IETF language tag like 'ja')" flag:"audiolang"`
+	SubsLang        string `default:"en" usage:"The subs language you want to use. (IETF language tag)" flag:"subslang"`
+	SubsName        string `default:"subtitles" usage:"What the subs track name needs to contain." flag:"subsname"`
+	TargetFolder    string `default:"./converted" usage:"The folder to put the converted videos in." flag:"outputfolder"`
+	OriginalsFolder string `default:"./originals" usage:"The alternative folder you want the originals moved to." flag:"move-originals-to"`
+	ExtractFonts    bool   `default:"true" usage:"Extract the fonts from the mkv to use them in the hardcoding." flag:"extract-fonts"`
+	FirstOnly       bool   `default:"false" usage:"Only convert the first file. (For testing purposes)" flag:"first-only"`
+	Mp4             bool   `default:"true" usage:"Make MP4 files instead of MKV files. Always doing this because MP4 is better supported." flag:"mp4"`
+	H26xTune        string `default:"animation" usage:"The tuning to use for h26x encoding. (film/animation/fastdecode/zerolatency/none)" flag:"h26x-tune"`
+	H26xPreset      string `default:"fast" usage:"The preset to use for h26x encoding. (fast/medium/slow/etc..)" flag:"h26x-preset"`
+	H265            bool   `default:"false" usage:"Use H265 encoding." flag:"h265"`
+	PostCmd         string `default:"" usage:"The command to run on completion. Use %%o for the output filename." flag:"postcmd"`
+	PostSubExtract  string `default:"" usage:"The command to run after we've extracted the subs but before conversion. Use %%s for subs filename." flag:"postsubextract"`
+	filesToConvert  []fs.DirEntry
+	KeepSubs        bool     `default:"false" usage:"Keep subs in the folder after conversion instead of deleting them." flag:"keepsubs"`
+	CleanupSubs     bool     `default:"false" usage:"Clean up the subtitles (in the case of srt) to make them render better with more readable sizes." flag:"cleansubs"`
+	Verbose         bool     `default:"false" usage:"Show verbose output." flag:"v"`
+	Crf             int      `default:"18" usage:"Constant Rate Factor setting for ffmpeg." flag:"crf"`
+	ForOldDevices   bool     `default:"false" usage:"Use ffmpeg flag to get widest compatibility." flag:"for-old-devices"`
+	Extension       string   `default:"mkv" usage:"Look for files of this extension to convert." flag:"ext"`
+	FastVersion     bool     `default:"false" usage:"Do a second and third pass, making a video at 1.5x the speed." flag:"fastversion"`
+	KeepSlowVersion bool     `default:"false" usage:"In case you're making fast versions, keep the slow versions as well." flag:"keep-slow"`
+	Detox           bool     `default:"true" usage:"Detox the source files in the directory before hardsubbing." flag:"detox"`
+	DetoxRemove     []string `default:"SubsPlease,EMBER" usage:"Remove these words when detoxing" flag:"removewords"`
+}
+
+func getConfigFromAconfig() Config {
+	var cfg Config
+	loader := aconfig.LoaderFor(&cfg, aconfig.Config{
+		EnvPrefix: "HS",
+		Files:     []string{"hardsub.toml"},
+		FileDecoders: map[string]aconfig.FileDecoder{
+			".toml": aconfigtoml.New(),
+		},
+	})
+	// flagSet := loader.Flags()
+	if err := loader.Load(); err != nil {
+		log.Fatal(err)
+	}
+	return cfg
+}
 
 func getConfigurationFromArguments() Config {
 	workdir, _ := os.Getwd()
@@ -93,7 +139,7 @@ func getConfigurationFromArguments() Config {
 		H265:            *h265,
 		PostCmd:         *postCmd,
 		PostSubExtract:  *postSubExtrationCmd,
-		FilesToConvert:  files,
+		filesToConvert:  files,
 		KeepSubs:        *keepSubsAfter,
 		CleanupSubs:     *cleanupSubs,
 		FastVersion:     *fastVersion,

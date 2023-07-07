@@ -1,38 +1,9 @@
 package main
 
 import (
-	"io/fs"
 	// "os"
 	"time"
 )
-
-type Config struct {
-	AudioLang  string
-	ScriptPath string
-	SubsLang   string
-	SubsName   string
-	// ScriptFile      *os.File
-	TargetFolder    string
-	OriginalsFolder string
-	ExtractFonts    bool
-	FirstOnly       bool
-	Mp4             bool
-	H26xTune        string
-	H26xPreset      string
-	H265            bool
-	PostCmd         string
-	PostSubExtract  string
-	RunDirectly     bool
-	FilesToConvert  []fs.DirEntry
-	KeepSubs        bool
-	CleanupSubs     bool
-	Verbose         bool
-	Crf             int
-	ForOldDevices   bool
-	Extension       string
-	FastVersion     bool
-	KeepSlowVersion bool
-}
 
 type (
 	SubsType     int
