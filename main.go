@@ -22,7 +22,18 @@ func main() {
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()
-			convert_file(fullpath, config)
+			outputFile, err := convert_file(fullpath, config)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if config.ScpHost != "" &&
+				config.ScpTargetDir != "" &&
+				config.ScpPrivKeyPath != "" {
+				destinationPath := path.Join(config.ScpTargetDir, path.Base(outputFile))
+				if err := CopyOverSCP(outputFile, config.ScpHost, config.ScpUser, config.ScpPort, destinationPath, config.ScpPrivKeyPath); err != nil {
+					fmt.Println(err)
+				}
+			}
 			if config.FirstOnly {
 				fmt.Println("Done!")
 				return
@@ -33,21 +44,21 @@ func main() {
 }
 
 // TODO: This needs to be split up in smaller chunks, it's way too big now.
-func convert_file(videofile string, config Config) {
+// Returns the converted filename and an error.
+func convert_file(videofile string, config Config) (string, error) {
 	Log("Converting", videofile)
 	output, err := SelectTracksWithMkvMerge(videofile, config)
 	if err != nil {
 		log.Fatal(err)
 	}
 	LastSelectedTracks = output
-
 	// write the script to convert.
 	noext := strings.Replace(videofile, path.Ext(videofile), "", 1)
 	var outputFile string
-	if config.Mp4 {
-		outputFile = path.Join(config.TargetFolder, strings.Replace(path.Base(videofile), ".mkv", ".mp4", 1))
-	} else {
+	if config.Mkv {
 		outputFile = path.Join(config.TargetFolder, "HS_"+path.Base(videofile))
+	} else {
+		outputFile = path.Join(config.TargetFolder, strings.Replace(path.Base(videofile), ".mkv", ".mp4", 1))
 	}
 	baseVideoFile := path.Base(videofile)
 	var subsfile string
@@ -79,7 +90,9 @@ func convert_file(videofile string, config Config) {
 			outputFile,
 		)
 		Log(picSubsExtractCommand)
-		RunAndParseFfmpeg(picSubsExtractCommand, vProps)
+		if err := RunAndParseFfmpeg(picSubsExtractCommand, vProps); err != nil {
+			return "", fmt.Errorf("error while extracting picture subs: %w", err)
+		}
 
 	} else {
 		// Extracting the subtitle file in case of text based ones, so we can forcibly select the correct one.
@@ -91,7 +104,9 @@ func convert_file(videofile string, config Config) {
 		}
 		srtSubsExtractCommand := fmt.Sprintf("-y -hide_banner -loglevel error -stats -txt_format text -i %s -map 0:%d %s", videofile, output.SubsTrack, subsfile)
 		Log(srtSubsExtractCommand)
-		RunAndParseFfmpeg(srtSubsExtractCommand, vProps)
+		if err := RunAndParseFfmpeg(srtSubsExtractCommand, vProps); err != nil {
+			return "", fmt.Errorf("error while extracting subs: %w", err)
+		}
 		if !config.KeepSubs {
 			defer os.Remove(subsfile)
 		}
@@ -107,17 +122,21 @@ func convert_file(videofile string, config Config) {
 		}
 		if config.ExtractFonts {
 			// writeExtractFontsCommand(config.TargetFolder, videofile, config.ScriptFile)
-			extractFonts(config.TargetFolder, videofile)
+			if err := extractFonts(config.TargetFolder, videofile); err != nil {
+				return "", fmt.Errorf("error extracting subs: %w", err)
+			}
 		} // TODO: Make this entire section template based.
 		audioCodec := "copy"
-		if config.Mp4 {
+		if !config.Mkv {
 			audioCodec = "aac"
 		}
 		convertCmd := fmt.Sprintf("-y -hide_banner -loglevel error -stats -i %s -map 0:%d -map 0:%d -vf subtitles=%s -c:a %s -c:v %s -crf %d -preset %s %s%s%s",
 			videofile, output.VideoTrack, output.AudioTrack, subsfile, audioCodec, videoCodec, config.Crf, config.H26xPreset, h26xTune, oldDevices, outputFile)
 		Log("Convert Command:", "ffmpeg", convertCmd)
 		fmt.Println("Starting re-encoding...")
-		RunAndParseFfmpeg(convertCmd, vProps)
+		if err := RunAndParseFfmpeg(convertCmd, vProps); err != nil {
+			return "", fmt.Errorf("error running the conversion for %s: %w", videofile, err)
+		}
 	}
 	if config.FastVersion {
 		fastOutputFile := strings.ReplaceAll(outputFile, path.Base(outputFile), "FAST_"+path.Base(outputFile))
@@ -132,17 +151,21 @@ func convert_file(videofile string, config Config) {
 				os.RemoveAll(outputFile)
 			}
 		}
+	}
 
-	}
-	if config.OriginalsFolder != config.TargetFolder {
-		if err := createDirectoryIfNeeded(config.OriginalsFolder); err == nil {
-			os.Rename(videofile, path.Join(config.OriginalsFolder, baseVideoFile))
-		}
-	}
 	if config.PostCmd != "" {
 		postcommand := strings.ReplaceAll(config.PostCmd, "%%o", outputFile)
 		if err := RunBashCommand(postcommand); err != nil {
 			fmt.Println("Post command failed, check your script?\n", err)
 		}
 	}
+
+	if config.OriginalsFolder != config.TargetFolder {
+		if err := createDirectoryIfNeeded(config.OriginalsFolder); err == nil {
+			movedFile := path.Join(config.OriginalsFolder, baseVideoFile)
+			os.Rename(videofile, movedFile)
+			return movedFile, nil
+		}
+	}
+	return outputFile, nil
 }

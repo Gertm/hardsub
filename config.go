@@ -39,14 +39,19 @@ type Config struct {
 	KeepSlowVersion bool
 	Detox           bool
 	RemoveWords     string
-	SshHost         string
+	ScpHost         string
+	ScpPort         int
+	ScpUser         string
+	ScpPrivKeyPath  string
+	ScpTargetDir    string
+	SourceFolder    string
 }
 
 func getConfigurationFromArguments() Config {
 	config := Config{}
 	workdir, _ := os.Getwd()
 	proposedConvertedDir := path.Join(workdir, "converted")
-	flag.StringVar(&config.TargetFolder, "folder", workdir, "The folder to convert all mkvs in. Defaults to the working directory.")
+	flag.StringVar(&config.SourceFolder, "folder", workdir, "The folder to convert all mkvs in. Defaults to the working directory.")
 	flag.BoolVar(&config.Detox, "detox", true, "Detox the mkv files in the directory first.")
 	flag.StringVar(&config.RemoveWords, "removewords", "SubsPlease,EMBER", "Remove the words in the comma separated value you specify.")
 	flag.StringVar(&config.Extension, "ext", "mkv", "Look for files of this extension to convert.")
@@ -70,6 +75,11 @@ func getConfigurationFromArguments() Config {
 	flag.StringVar(&config.H26xTune, "h26x-tune", "animation", "The tuning to use for h26x encoding. (film/animation/fastdecode/zerolatency/none)")
 	flag.StringVar(&config.H26xPreset, "h26x-preset", "fast", "The preset to use for h26x encoding. (fast/medium/slow/etc..)")
 	flag.BoolVar(&config.H265, "h265", false, "Use H265 encoding.")
+	flag.StringVar(&config.ScpHost, "scpHost", "", "The hostname of the server you want to SCP to after successfull conversion.")
+	flag.StringVar(&config.ScpUser, "scpUser", "", "The username when doing SCP.")
+	flag.IntVar(&config.ScpPort, "scpPort", 22, "The port to use when doing SCP.")
+	flag.StringVar(&config.ScpPrivKeyPath, "scpPrivKeyPath", "", "The location of your private key file for SCP.")
+	flag.StringVar(&config.ScpTargetDir, "scpTargetDir", "", "The remote folder you want to SCP into.")
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, `
@@ -95,7 +105,7 @@ func getConfigurationFromArguments() Config {
 		fmt.Print("done.\n")
 	}
 
-	files, err := os.ReadDir(config.TargetFolder)
+	files, err := os.ReadDir(config.SourceFolder)
 	if err != nil {
 		log.Fatal(err)
 	}
