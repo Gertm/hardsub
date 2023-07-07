@@ -164,7 +164,6 @@ func convert_file(videofile string, config Config) (string, error) {
 		if err := createDirectoryIfNeeded(config.OriginalsFolder); err == nil {
 			movedFile := path.Join(config.OriginalsFolder, baseVideoFile)
 			os.Rename(videofile, movedFile)
-			return movedFile, nil
 		}
 	}
 	return outputFile, nil
