@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"path"
@@ -10,6 +11,34 @@ import (
 
 	"github.com/sanity-io/litter"
 )
+
+type Config struct {
+	AudioLang  string
+	ScriptPath string
+	SubsLang   string
+	SubsName   string
+	// ScriptFile      *os.File
+	TargetFolder    string
+	OriginalsFolder string
+	Extractfonts    bool
+	FirstOnly       bool
+	Mp4             bool
+	H26xTune        string
+	H26xPreset      string
+	H265            bool
+	PostCmd         string
+	PostSubExtract  string
+	RunDirectly     bool
+	FilesToConvert  []fs.DirEntry
+	KeepSubs        bool
+	CleanupSubs     bool
+	Verbose         bool
+	Crf             int
+	ForOldDevices   bool
+	Extension       string
+	FastVersion     bool
+	KeepSlowVersion bool
+}
 
 func getConfigurationFromArguments() Config {
 	workdir, _ := os.Getwd()
