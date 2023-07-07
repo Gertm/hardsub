@@ -35,14 +35,6 @@ func main() {
 // TODO: This needs to be split up in smaller chunks, it's way too big now.
 func convert_file(videofile string, config Config) {
 	Log("Converting", videofile)
-	// if config.FastVersion {
-	// 	createDirectoryIfNeeded(config.TargetFolder)
-	// 	outputFile := path.Join(config.TargetFolder, "FAST_"+path.Base(videofile))
-	// 	if err := FastFile(videofile, outputFile); err != nil {
-	// 		fmt.Println("Couldn't double the speed of", videofile, err)
-	// 	}
-	// 	return
-	// }
 	output, err := SelectTracksWithMkvMerge(videofile, config)
 	if err != nil {
 		log.Fatal(err)
