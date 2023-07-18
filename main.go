@@ -30,6 +30,7 @@ func main() {
 				config.ScpTargetDir != "" &&
 				config.ScpPrivKeyPath != "" {
 				destinationPath := path.Join(config.ScpTargetDir, path.Base(outputFile))
+				fmt.Println("Uploading", outputFile, "to", config.ScpHost)
 				if err := CopyOverSCP(outputFile, config.ScpHost, config.ScpUser, config.ScpPort, destinationPath, config.ScpPrivKeyPath); err != nil {
 					fmt.Println(err)
 				}
