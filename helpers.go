@@ -275,3 +275,8 @@ func FindInPath(exe string) (string, error) {
 	}
 	return path, nil
 }
+
+func FileExists(filename string) bool {
+	_, error := os.Stat(filename)
+	return !errors.Is(error, os.ErrNotExist)
+}
