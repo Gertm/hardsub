@@ -7,11 +7,18 @@ The idea is to navigate to the folder where you have stored the mkv files and ju
 The defaults are set to my own use case. Nearly everything is configurable, so it shouldn't be hard to customize
 this to your needs.
 
+I use this software several times a week, without problems. It does what it needs to do because I have a very
+specific use case. So this might not fit your specific problem. _You are welcome to make a pull request_ or even
+fork the project.
+
 ## Work in progress
 This is very much a hobby project to scratch an itch. Contributions and suggestions are welcome,
 feel free to open an issue.  
 I do not pretend this is the best Go code ever written.  
-The code was written to automate something boring. It could use some cleaning up, which I'm slowly doing.
+The code was written to automate something boring. It could use some cleaning up, which I'm slowly doing.  
+Some of the code is still very much not cleaned up. (especially main.go) _You are welcome to help out_.  
+This project is "done" for me. Which means I don't need any more features or nicer CLI output. It does the job
+and I'm happy with it.
 
 ## Requirements
 You need ffmpeg, ffprobe and mkvtoolnix cli programs installed and on your $PATH.  
