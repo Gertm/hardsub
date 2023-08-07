@@ -22,8 +22,7 @@ and I'm happy with it.
 
 ## Requirements
 You need ffmpeg, ffprobe and mkvtoolnix cli programs installed and on your $PATH.  
+There are release versions in the releases page.
 
-I could add goreleaser at some point to get easy release versions of this.
-
-For now, you'll have to build it yourself. You need Go installed.  
+Or, you can build it yourself. You need Go installed.  
 Clone the repo and run 'go install', this will install the tool into $HOME/go/bin/  (which should be in your $PATH)
