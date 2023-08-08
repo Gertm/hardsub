@@ -2,4 +2,8 @@
  
 ffmpeg -i input.mkv -filter_complex "[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]" -map "[v]" -map "[a]" output.mkv
 
- 
+search for similar frames:
+
+image.jpg is the frame you are looking for:
+
+ffmpeg -i video.mp4 -loop 1 -i image.jpg -an -filter_complex "blend=difference:shortest=1,blackframe=99:32" -f null -
