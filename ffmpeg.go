@@ -149,15 +149,15 @@ func RunAndParseFfmpeg(args string, prop VideoProperties) error {
 	return nil
 }
 
-func FastFile(input string, output string) error {
-	inputProps := GetVideoPropertiesWithFFProbe(input)
-	firstPassArgs := fmt.Sprintf("-i %s -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264", input)
+func FastFile(inputFilePath string, outputFilePath string) error {
+	inputProps := GetVideoPropertiesWithFFProbe(inputFilePath)
+	firstPassArgs := fmt.Sprintf("-i %s -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264", inputFilePath)
 	defer os.RemoveAll("raw.h264")
 	err := RunAndParseFfmpeg(firstPassArgs, inputProps)
 	if err != nil {
 		return err
 	}
-	ffmpegArgs := fmt.Sprintf("-fflags +genpts -r 36 -i raw.h264 -i %s -map 0:v -c:v copy -map 1:a -af atempo=1.5 -movflags faststart %s", input, output)
+	ffmpegArgs := fmt.Sprintf("-fflags +genpts -r 36 -i raw.h264 -i %s -map 0:v -c:v copy -map 1:a -af atempo=1.5 -movflags faststart %s", inputFilePath, outputFilePath)
 	return RunAndParseFfmpeg(ffmpegArgs, inputProps)
 }
 
@@ -166,3 +166,10 @@ ffmpeg -i $f -map 0:v -c:v copy -bsf:v h264_mp4toannexb raw.h264
 ffmpeg -fflags +genpts -r 36 -i raw.h264 -i $f -map 0:v -c:v copy -map 1:a -af atempo=1.5 -movflags faststart FAST_$f
 rm raw.h264
 */
+
+func SearchForFrame(videoFile, frameImage string) (int, error) {
+	// ffmpeg -loglevel info -i video.mkv -loop 1 -i frameImage.jpg -an -filter_complex "blend=difference:shortest=1,blackframe=98:32" -f null -
+	ffmpegArgs := fmt.Sprintf("ffmpeg -loglevel info -i %s -loop 1 -i %s -an -filter_complex \"blend=difference:shortest=1,blackframe=98:32\" -f null -", videoFile, frameImage)
+	fmt.Println(ffmpegArgs)
+	return 0, nil
+}
