@@ -20,6 +20,14 @@ Some of the code is still very much not cleaned up. (especially main.go) _You ar
 This project is "done" for me. Which means I don't need any more features or nicer CLI output. It does the job
 and I'm happy with it.
 
+## Currently working on or thinking about implementing these things:
+- Adding functionality for this program to wait for files to be written to a folder and convert them when they are
+fully uploaded.
+- Searching for the intro part of the video and cutting it out of the hardsubbed file. This will require the user to
+create a couple of screenshots so the tool knows what to look for.
+- Simple notification support, so you can get notified when the video conversion is done.
+
+
 ## Requirements
 You need ffmpeg, ffprobe and mkvtoolnix cli programs installed and on your $PATH.  
 There are release versions in the releases page.
