@@ -35,32 +35,32 @@ type Config struct {
 	SubsName        string
 	TargetFolder    string
 	OriginalsFolder string
-	ExtractFonts    bool
-	FirstOnly       bool
-	Mkv             bool
 	H26xTune        string
 	H26xPreset      string
-	H265            bool
 	PostCmd         string
 	PostSubExtract  string
-	RunDirectly     bool
-	FilesToConvert  []fs.DirEntry
-	KeepSubs        bool
-	CleanupSubs     bool
-	Verbose         bool
-	Crf             int
-	ForOldDevices   bool
 	Extension       string
-	FastVersion     bool
-	KeepSlowVersion bool
-	Detox           bool
 	RemoveWords     string
 	ScpHost         string
-	ScpPort         int
 	ScpUser         string
 	ScpPrivKeyPath  string
 	ScpTargetDir    string
 	SourceFolder    string
+	FilesToConvert  []fs.DirEntry
+	Crf             int
+	ScpPort         int
+	ExtractFonts    bool
+	FirstOnly       bool
+	Mkv             bool
+	H265            bool
+	RunDirectly     bool
+	KeepSubs        bool
+	CleanupSubs     bool
+	Verbose         bool
+	ForOldDevices   bool
+	FastVersion     bool
+	KeepSlowVersion bool
+	Detox           bool
 }
 
 func getConfigurationFromArguments() Config {

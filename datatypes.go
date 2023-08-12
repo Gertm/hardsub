@@ -49,108 +49,108 @@ func (lst MappedTracks) contains(i int) bool {
 }
 
 type MkvMergeOutput struct {
+	Container struct {
+		Type       string `json:"type"`
+		Properties struct {
+			DateLocal             time.Time `json:"date_local"`
+			DateUtc               time.Time `json:"date_utc"`
+			MuxingApplication     string    `json:"muxing_application"`
+			SegmentUID            string    `json:"segment_uid"`
+			WritingApplication    string    `json:"writing_application"`
+			ContainerType         int       `json:"container_type"`
+			Duration              int64     `json:"duration"`
+			IsProvidingTimestamps bool      `json:"is_providing_timestamps"`
+		} `json:"properties"`
+		Recognized bool `json:"recognized"`
+		Supported  bool `json:"supported"`
+	} `json:"container"`
+	FileName    string        `json:"file_name"`
 	Attachments []interface{} `json:"attachments"`
 	Chapters    []struct {
 		NumEntries int `json:"num_entries"`
 	} `json:"chapters"`
-	Container struct {
-		Properties struct {
-			ContainerType         int       `json:"container_type"`
-			DateLocal             time.Time `json:"date_local"`
-			DateUtc               time.Time `json:"date_utc"`
-			Duration              int64     `json:"duration"`
-			IsProvidingTimestamps bool      `json:"is_providing_timestamps"`
-			MuxingApplication     string    `json:"muxing_application"`
-			SegmentUID            string    `json:"segment_uid"`
-			WritingApplication    string    `json:"writing_application"`
-		} `json:"properties"`
-		Recognized bool   `json:"recognized"`
-		Supported  bool   `json:"supported"`
-		Type       string `json:"type"`
-	} `json:"container"`
-	Errors                      []interface{} `json:"errors"`
-	FileName                    string        `json:"file_name"`
-	GlobalTags                  []interface{} `json:"global_tags"`
-	IdentificationFormatVersion int           `json:"identification_format_version"`
-	TrackTags                   []interface{} `json:"track_tags"`
-	Tracks                      []struct {
-		Codec      string `json:"codec"`
-		ID         int    `json:"id"`
-		Properties struct {
-			CodecID            string `json:"codec_id"`
-			CodecPrivateData   string `json:"codec_private_data"`
-			CodecPrivateLength int    `json:"codec_private_length"`
-			DefaultDuration    int    `json:"default_duration"`
-			DefaultTrack       bool   `json:"default_track"`
-			DisplayDimensions  string `json:"display_dimensions"`
-			DisplayUnit        int    `json:"display_unit"`
-			EnabledTrack       bool   `json:"enabled_track"`
-			ForcedTrack        bool   `json:"forced_track"`
-			Language           string `json:"language"`
-			LanguageIetf       string `json:"language_ietf"`
-			MinimumTimestamp   int    `json:"minimum_timestamp"`
-			Number             int    `json:"number"`
-			Packetizer         string `json:"packetizer"`
-			PixelDimensions    string `json:"pixel_dimensions"`
-			UID                int64  `json:"uid"`
-		} `json:"properties,omitempty"`
+	Errors     []interface{} `json:"errors"`
+	GlobalTags []interface{} `json:"global_tags"`
+	TrackTags  []interface{} `json:"track_tags"`
+	Tracks     []struct {
+		Codec       string `json:"codec"`
 		Type        string `json:"type"`
-		Properties0 struct {
-			AudioChannels          int    `json:"audio_channels"`
-			AudioSamplingFrequency int    `json:"audio_sampling_frequency"`
-			CodecID                string `json:"codec_id"`
-			CodecPrivateLength     int    `json:"codec_private_length"`
-			DefaultDuration        int    `json:"default_duration"`
-			DefaultTrack           bool   `json:"default_track"`
-			EnabledTrack           bool   `json:"enabled_track"`
-			ForcedTrack            bool   `json:"forced_track"`
-			Language               string `json:"language"`
-			LanguageIetf           string `json:"language_ietf"`
-			MinimumTimestamp       int    `json:"minimum_timestamp"`
-			Number                 int    `json:"number"`
-			UID                    int    `json:"uid"`
-		} `json:"properties,omitempty"`
-		Properties1 struct {
-			AudioChannels          int    `json:"audio_channels"`
-			AudioSamplingFrequency int    `json:"audio_sampling_frequency"`
-			CodecID                string `json:"codec_id"`
-			CodecPrivateLength     int    `json:"codec_private_length"`
-			DefaultDuration        int    `json:"default_duration"`
-			DefaultTrack           bool   `json:"default_track"`
-			EnabledTrack           bool   `json:"enabled_track"`
-			ForcedTrack            bool   `json:"forced_track"`
-			Language               string `json:"language"`
-			LanguageIetf           string `json:"language_ietf"`
-			MinimumTimestamp       int    `json:"minimum_timestamp"`
-			Number                 int    `json:"number"`
-			UID                    int    `json:"uid"`
+		Properties3 struct {
+			CodecID                   string `json:"codec_id"`
+			ContentEncodingAlgorithms string `json:"content_encoding_algorithms"`
+			Language                  string `json:"language"`
+			LanguageIetf              string `json:"language_ietf"`
+			TrackName                 string `json:"track_name"`
+			CodecPrivateLength        int    `json:"codec_private_length"`
+			Number                    int    `json:"number"`
+			UID                       int64  `json:"uid"`
+			DefaultTrack              bool   `json:"default_track"`
+			EnabledTrack              bool   `json:"enabled_track"`
+			ForcedTrack               bool   `json:"forced_track"`
 		} `json:"properties,omitempty"`
 		Properties2 struct {
 			CodecID                   string `json:"codec_id"`
-			CodecPrivateLength        int    `json:"codec_private_length"`
 			ContentEncodingAlgorithms string `json:"content_encoding_algorithms"`
-			DefaultTrack              bool   `json:"default_track"`
-			EnabledTrack              bool   `json:"enabled_track"`
-			ForcedTrack               bool   `json:"forced_track"`
 			Language                  string `json:"language"`
 			LanguageIetf              string `json:"language_ietf"`
+			CodecPrivateLength        int    `json:"codec_private_length"`
 			MinimumTimestamp          int    `json:"minimum_timestamp"`
 			Number                    int    `json:"number"`
 			UID                       int64  `json:"uid"`
-		} `json:"properties,omitempty"`
-		Properties3 struct {
-			CodecID                   string `json:"codec_id"`
-			CodecPrivateLength        int    `json:"codec_private_length"`
-			ContentEncodingAlgorithms string `json:"content_encoding_algorithms"`
 			DefaultTrack              bool   `json:"default_track"`
 			EnabledTrack              bool   `json:"enabled_track"`
 			ForcedTrack               bool   `json:"forced_track"`
-			Language                  string `json:"language"`
-			LanguageIetf              string `json:"language_ietf"`
-			Number                    int    `json:"number"`
-			TrackName                 string `json:"track_name"`
-			UID                       int64  `json:"uid"`
 		} `json:"properties,omitempty"`
+		Properties struct {
+			CodecID            string `json:"codec_id"`
+			CodecPrivateData   string `json:"codec_private_data"`
+			DisplayDimensions  string `json:"display_dimensions"`
+			Language           string `json:"language"`
+			LanguageIetf       string `json:"language_ietf"`
+			Packetizer         string `json:"packetizer"`
+			PixelDimensions    string `json:"pixel_dimensions"`
+			CodecPrivateLength int    `json:"codec_private_length"`
+			DefaultDuration    int    `json:"default_duration"`
+			DisplayUnit        int    `json:"display_unit"`
+			MinimumTimestamp   int    `json:"minimum_timestamp"`
+			Number             int    `json:"number"`
+			UID                int64  `json:"uid"`
+			DefaultTrack       bool   `json:"default_track"`
+			EnabledTrack       bool   `json:"enabled_track"`
+			ForcedTrack        bool   `json:"forced_track"`
+		} `json:"properties,omitempty"`
+		Properties0 struct {
+			CodecID                string `json:"codec_id"`
+			Language               string `json:"language"`
+			LanguageIetf           string `json:"language_ietf"`
+			AudioChannels          int    `json:"audio_channels"`
+			AudioSamplingFrequency int    `json:"audio_sampling_frequency"`
+			CodecPrivateLength     int    `json:"codec_private_length"`
+			DefaultDuration        int    `json:"default_duration"`
+			MinimumTimestamp       int    `json:"minimum_timestamp"`
+			Number                 int    `json:"number"`
+			UID                    int    `json:"uid"`
+			DefaultTrack           bool   `json:"default_track"`
+			EnabledTrack           bool   `json:"enabled_track"`
+			ForcedTrack            bool   `json:"forced_track"`
+		} `json:"properties,omitempty"`
+		Properties1 struct {
+			CodecID                string `json:"codec_id"`
+			Language               string `json:"language"`
+			LanguageIetf           string `json:"language_ietf"`
+			AudioChannels          int    `json:"audio_channels"`
+			AudioSamplingFrequency int    `json:"audio_sampling_frequency"`
+			CodecPrivateLength     int    `json:"codec_private_length"`
+			DefaultDuration        int    `json:"default_duration"`
+			MinimumTimestamp       int    `json:"minimum_timestamp"`
+			Number                 int    `json:"number"`
+			UID                    int    `json:"uid"`
+			DefaultTrack           bool   `json:"default_track"`
+			EnabledTrack           bool   `json:"enabled_track"`
+			ForcedTrack            bool   `json:"forced_track"`
+		} `json:"properties,omitempty"`
+		ID int `json:"id"`
 	} `json:"tracks"`
-	Warnings []interface{} `json:"warnings"`
+	Warnings                    []interface{} `json:"warnings"`
+	IdentificationFormatVersion int           `json:"identification_format_version"`
 }

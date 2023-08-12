@@ -28,8 +28,8 @@ import (
 )
 
 type VideoProperties struct {
-	NrOfVideoFrames int
 	Filename        string
+	NrOfVideoFrames int
 }
 
 func GetVideoPropertiesWithFFProbe(filename string) VideoProperties {
