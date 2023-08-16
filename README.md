@@ -17,8 +17,7 @@ feel free to open an issue.
 I do not pretend this is the best Go code ever written.  
 The code was written to automate something boring. It could use some cleaning up, which I'm slowly doing.  
 Some of the code is still very much not cleaned up. (especially main.go) _You are welcome to help out_.  
-This project is "done" for me. Which means I don't need any more features or nicer CLI output. It does the job
-and I'm happy with it.
+This project is basically "done" for me. It does the job and I'm happy with it. However, there are still more things to tinker with:  
 
 ## Currently working on or thinking about implementing these things:
 - Adding functionality for this program to wait for files to be written to a folder and convert them when they are
