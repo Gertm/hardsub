@@ -216,7 +216,10 @@ func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, err
 	// first make the pre-fragment video
 	firstArgs := fmt.Sprintf("-y -i %s -ss 00:00:00 -to %s -c:v copy -c:a copy %s", videoFile, start, firstPart)
 	lastArgs := fmt.Sprintf("-y -i %s -ss %s -to %s -c:v copy -c:a copy %s", videoFile, end, videoProps.Duration, lastPart)
-	concatArgs := fmt.Sprintf("-y -i concat:%s|%s -c copy %s", firstPart, lastPart, noIntroFile)
+	concatInput := fmt.Sprintf("file '%s'\nfile '%s'", firstPart, lastPart)
+	os.WriteFile("concat.txt", []byte(concatInput), 0x644)
+	// defer os.RemoveAll("concat.txt")
+	concatArgs := fmt.Sprintf("-y -f concat -i concat.txt -c copy %s", noIntroFile)
 	fmt.Println("ffmpeg", firstArgs, "\nffmpeg", lastArgs, "\nffmpeg", concatArgs)
 	fmt.Println("Cutting first part...")
 	if err := RunAndParseFfmpeg(firstArgs, videoProps); err != nil {
