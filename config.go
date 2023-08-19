@@ -58,7 +58,7 @@ type Config struct {
 	Detox           bool
 	CutStart        string
 	CutEnd          string
-	Cut             bool
+	OnlyCut         bool
 }
 
 func getConfigurationFromArguments() Config {
@@ -89,7 +89,7 @@ func getConfigurationFromArguments() Config {
 	flag.StringVar(&config.H26xTune, "h26x-tune", "animation", "The tuning to use for h26x encoding. (film/animation/fastdecode/zerolatency/none)")
 	flag.StringVar(&config.H26xPreset, "h26x-preset", "fast", "The preset to use for h26x encoding. (fast/medium/slow/etc..)")
 	flag.BoolVar(&config.H265, "h265", false, "Use H265 encoding.")
-	flag.BoolVar(&config.Cut, "cut", false, "Cut a part of the video out, based on 2 reference frames (jpgs) specified with -cutstart and -cutend.")
+	flag.BoolVar(&config.OnlyCut, "onlycut", false, "Only cut, don't convert.")
 	flag.StringVar(&config.CutStart, "cutstart", "", "A jpg of the frame to look for in the video to determine the start of the fragment to cut out.")
 	flag.StringVar(&config.CutEnd, "cutend", "", "A jpg of the frame to look for in the video to determine the end of the fragment to cut out.")
 	flag.Usage = func() {

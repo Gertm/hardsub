@@ -34,6 +34,13 @@ func main() {
 	config := getConfigurationFromArguments()
 
 	for _, file := range config.FilesToConvert {
+		if config.OnlyCut {
+			_, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, file.Name())
+			if err != nil {
+				fmt.Printf("could not cut fragment from output: %s\n", err)
+			}
+			os.Exit(0)
+		}
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()
@@ -161,10 +168,10 @@ func convert_file(videofile string, config Config) (string, error) {
 		}
 	}
 
-	if config.Cut {
+	if !config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
 		cutFile, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, outputFile)
 		if err != nil {
-			fmt.Println("could not cut fragment from output: %s", err)
+			fmt.Printf("could not cut fragment from output: %s\n", err)
 		} else {
 			outputFile = cutFile
 		}

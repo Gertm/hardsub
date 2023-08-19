@@ -31,6 +31,7 @@ import (
 type VideoProperties struct {
 	Filename        string
 	NrOfVideoFrames int
+	Duration        string
 }
 
 func GetVideoPropertiesWithFFProbe(filename string) VideoProperties {
@@ -41,6 +42,7 @@ func GetVideoPropertiesWithFFProbe(filename string) VideoProperties {
 	}
 	ffprobeCommand := ffprobe + " -v error -select_streams v:0 -count_packets -show_entries stream=nb_read_packets -print_format csv " + filename
 	// output, err := OutputForBashCommand(ffprobeCommand)
+	// ffprobe -i video -show_entries format=duration -v quiet -sexagesimal -of csv
 	output, err := OutputForCommand(ffprobeCommand)
 	if err != nil {
 		fmt.Println("Could not get VideoProperties with FFprobe:", err)
@@ -52,9 +54,16 @@ func GetVideoPropertiesWithFFProbe(filename string) VideoProperties {
 		fmt.Println("Number of packets not a number?!", "|"+nrOfPackets+"|")
 		return VideoProperties{}
 	}
+	durationCommand := fmt.Sprintf("%s -i %s -show_entries format=duration -v quiet -sexagesimal -of csv", ffprobe, filename)
+	output, err = OutputForCommand(durationCommand)
+	if err != nil {
+		fmt.Println("Could not get duration with ffprobe")
+	}
+	duration := strings.TrimSpace(strings.Split(string(output), ",")[1])
 	return VideoProperties{
 		Filename:        filename,
 		NrOfVideoFrames: packets,
+		Duration:        duration,
 	}
 }
 
@@ -170,7 +179,7 @@ rm raw.h264
 
 func SearchForFrame(videoFile, frameImage string) (time.Duration, error) {
 	// ffmpeg -loglevel info -i video.mkv -loop 1 -i frameImage.jpg -an -filter_complex "blend=difference:shortest=1,blackframe=98:32" -f null -
-	args := fmt.Sprintf("-loglevel info -i %s -loop 1 -i %s -an -filter_complex blend=difference:shortest=1,blackframe=98:32 -f null -", videoFile, frameImage)
+	args := fmt.Sprintf("-loglevel info -i %s -loop 1 -i %s -an -filter_complex blend=difference:shortest=1,blackframe=98:32 -f null -progress - -", videoFile, frameImage)
 
 	cmd := exec.Command("ffmpeg", strings.Split(args, " ")...)
 
@@ -178,18 +187,13 @@ func SearchForFrame(videoFile, frameImage string) (time.Duration, error) {
 	cmd.Start()
 	// [Parsed_blackframe_1 @ 0x9f27880] frame:2470 pblack:100 pts:103020 t:103.020000 type:I last_keyframe:2448
 	scanner := bufio.NewScanner(stderr)
-	scanner.Split(bufio.ScanLines)
+	scanner.Split(bufio.ScanWords)
 	for scanner.Scan() {
 		m := scanner.Text()
-		if strings.HasPrefix(m, "[Parsed_blackframe") {
-			parts := strings.Fields(m)
-			for _, p := range parts {
-				if strings.HasPrefix(p, "t:") {
-					if s, err := strconv.ParseFloat(p, 64); err == nil {
-						cmd.Process.Kill()
-						return time.ParseDuration(fmt.Sprintf("%fs", s))
-					}
-				}
+		if strings.HasPrefix(m, "t:") {
+			if s, err := strconv.ParseFloat(m[2:], 64); err == nil {
+				cmd.Process.Kill()
+				return time.ParseDuration(fmt.Sprintf("%fs", s))
 			}
 		}
 	}
@@ -204,28 +208,48 @@ func formatDuration(d time.Duration) string {
 // returns the full name of the videoFile with the fragment cut out.
 func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, error) {
 	noIntroFile := strings.ReplaceAll(videoFile, path.Base(videoFile), "NOINTRO_"+path.Base(videoFile))
+	firstPart := strings.ReplaceAll(videoFile, path.Base(videoFile), "first_"+path.Base(videoFile))
+	lastPart := strings.ReplaceAll(videoFile, path.Base(videoFile), "last_"+path.Base(videoFile))
+	videoProps := GetVideoPropertiesWithFFProbe(videoFile)
 	start := formatDuration(ts_start)
 	end := formatDuration(ts_end)
-	args := fmt.Sprintf("-i %s -ss %s -to %s -c:v copy -c:a copy %s", videoFile, start, end, noIntroFile)
-	fmt.Println(args)
-	// ffmpeg -i videofile.mp4 -ss <starttime> -to <endtime> -c:v copy -c:a copy <outputfile.mp4>
-	err := RunAndParseFfmpeg(args, GetVideoPropertiesWithFFProbe(videoFile))
-	if err != nil {
+	// first make the pre-fragment video
+	firstArgs := fmt.Sprintf("-y -i %s -ss 00:00:00 -to %s -c:v copy -c:a copy %s", videoFile, start, firstPart)
+	lastArgs := fmt.Sprintf("-y -i %s -ss %s -to %s -c:v copy -c:a copy %s", videoFile, end, videoProps.Duration, lastPart)
+	concatArgs := fmt.Sprintf("-y -i concat:%s|%s -c copy %s", firstPart, lastPart, noIntroFile)
+	fmt.Println("ffmpeg", firstArgs, "\nffmpeg", lastArgs, "\nffmpeg", concatArgs)
+	fmt.Println("Cutting first part...")
+	if err := RunAndParseFfmpeg(firstArgs, videoProps); err != nil {
 		fmt.Println(err)
+		return "", err
 	}
-	return noIntroFile, err
+	fmt.Println("Cutting second part...")
+	if err := RunAndParseFfmpeg(lastArgs, videoProps); err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	fmt.Println("Concatenating the two pieces...")
+	if err := RunAndParseFfmpeg(concatArgs, videoProps); err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	return noIntroFile, nil
 }
 
 func CutFragmentFromVideo(startFrameFile, endFrameFile, videoFile string) (string, error) {
+	fmt.Println("Looking for start of fragment...")
 	start, err := SearchForFrame(videoFile, startFrameFile)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
+	fmt.Println("Found start frame at", start)
+	fmt.Println("Looking for end of fragment...")
 	stop, err := SearchForFrame(videoFile, endFrameFile)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
+	fmt.Printf("Cutting out fragment between %v and %v\n", start, stop)
 	return cutFromVideo(start, stop, videoFile)
 }
