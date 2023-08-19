@@ -41,10 +41,6 @@ type Config struct {
 	PostSubExtract  string
 	Extension       string
 	RemoveWords     string
-	ScpHost         string
-	ScpUser         string
-	ScpPrivKeyPath  string
-	ScpTargetDir    string
 	SourceFolder    string
 	FilesToConvert  []fs.DirEntry
 	Crf             int
@@ -91,11 +87,6 @@ func getConfigurationFromArguments() Config {
 	flag.StringVar(&config.H26xTune, "h26x-tune", "animation", "The tuning to use for h26x encoding. (film/animation/fastdecode/zerolatency/none)")
 	flag.StringVar(&config.H26xPreset, "h26x-preset", "fast", "The preset to use for h26x encoding. (fast/medium/slow/etc..)")
 	flag.BoolVar(&config.H265, "h265", false, "Use H265 encoding.")
-	flag.StringVar(&config.ScpHost, "scpHost", "", "The hostname of the server you want to SCP to after successfull conversion.")
-	flag.StringVar(&config.ScpUser, "scpUser", "", "The username when doing SCP.")
-	flag.IntVar(&config.ScpPort, "scpPort", 22, "The port to use when doing SCP.")
-	flag.StringVar(&config.ScpPrivKeyPath, "scpPrivKeyPath", "", "The location of your private key file for SCP.")
-	flag.StringVar(&config.ScpTargetDir, "scpTargetDir", "", "The remote folder you want to SCP into.")
 
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, `

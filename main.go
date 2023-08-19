@@ -38,18 +38,9 @@ func main() {
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()
-			outputFile, err := convert_file(fullpath, config)
+			_, err := convert_file(fullpath, config)
 			if err != nil {
 				log.Fatal(err)
-			}
-			if config.ScpHost != "" &&
-				config.ScpTargetDir != "" &&
-				config.ScpPrivKeyPath != "" {
-				destinationPath := path.Join(config.ScpTargetDir, path.Base(outputFile))
-				fmt.Println("Uploading", outputFile, "to", config.ScpHost)
-				if err := CopyOverSCP(outputFile, config.ScpHost, config.ScpUser, config.ScpPort, destinationPath, config.ScpPrivKeyPath); err != nil {
-					fmt.Println(err)
-				}
 			}
 			if config.FirstOnly {
 				fmt.Println("Done!")
