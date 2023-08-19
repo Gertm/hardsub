@@ -210,16 +210,21 @@ func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, err
 	fmt.Println(args)
 	// ffmpeg -i videofile.mp4 -ss <starttime> -to <endtime> -c:v copy -c:a copy <outputfile.mp4>
 	err := RunAndParseFfmpeg(args, GetVideoPropertiesWithFFProbe(videoFile))
+	if err != nil {
+		fmt.Println(err)
+	}
 	return noIntroFile, err
 }
 
 func CutFragmentFromVideo(startFrameFile, endFrameFile, videoFile string) (string, error) {
 	start, err := SearchForFrame(videoFile, startFrameFile)
 	if err != nil {
+		fmt.Println(err)
 		return "", err
 	}
 	stop, err := SearchForFrame(videoFile, endFrameFile)
 	if err != nil {
+		fmt.Println(err)
 		return "", err
 	}
 	return cutFromVideo(start, stop, videoFile)
