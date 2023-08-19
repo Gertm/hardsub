@@ -156,7 +156,17 @@ func convert_file(videofile string, config Config) (string, error) {
 		} else {
 			if !config.KeepSlowVersion {
 				os.RemoveAll(outputFile)
+				outputFile = fastOutputFile
 			}
+		}
+	}
+
+	if config.Cut {
+		cutFile, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, outputFile)
+		if err != nil {
+			fmt.Println("could not cut fragment from output: %s", err)
+		} else {
+			outputFile = cutFile
 		}
 	}
 

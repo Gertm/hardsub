@@ -20,8 +20,10 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/schollz/progressbar/v3"
 )
@@ -166,9 +168,59 @@ ffmpeg -fflags +genpts -r 36 -i raw.h264 -i $f -map 0:v -c:v copy -map 1:a -af a
 rm raw.h264
 */
 
-func SearchForFrame(videoFile, frameImage string) (int, error) {
+func SearchForFrame(videoFile, frameImage string) (time.Duration, error) {
 	// ffmpeg -loglevel info -i video.mkv -loop 1 -i frameImage.jpg -an -filter_complex "blend=difference:shortest=1,blackframe=98:32" -f null -
-	ffmpegArgs := fmt.Sprintf("ffmpeg -loglevel info -i %s -loop 1 -i %s -an -filter_complex \"blend=difference:shortest=1,blackframe=98:32\" -f null -", videoFile, frameImage)
-	fmt.Println(ffmpegArgs)
-	return 0, nil
+	args := fmt.Sprintf("-loglevel info -i %s -loop 1 -i %s -an -filter_complex blend=difference:shortest=1,blackframe=98:32 -f null -", videoFile, frameImage)
+
+	cmd := exec.Command("ffmpeg", strings.Split(args, " ")...)
+
+	stderr, _ := cmd.StderrPipe() // for some reason ffmpeg outputs to stderr only.
+	cmd.Start()
+	// [Parsed_blackframe_1 @ 0x9f27880] frame:2470 pblack:100 pts:103020 t:103.020000 type:I last_keyframe:2448
+	scanner := bufio.NewScanner(stderr)
+	scanner.Split(bufio.ScanLines)
+	for scanner.Scan() {
+		m := scanner.Text()
+		if strings.HasPrefix(m, "[Parsed_blackframe") {
+			parts := strings.Fields(m)
+			for _, p := range parts {
+				if strings.HasPrefix(p, "t:") {
+					if s, err := strconv.ParseFloat(p, 64); err == nil {
+						cmd.Process.Kill()
+						return time.ParseDuration(fmt.Sprintf("%fs", s))
+					}
+				}
+			}
+		}
+	}
+	return 0, fmt.Errorf("cannot find frame")
+}
+
+func formatDuration(d time.Duration) string {
+	t := time.Unix(0, 0).UTC()
+	return t.Add(d).Format("15:04:05.000")
+}
+
+// returns the full name of the videoFile with the fragment cut out.
+func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, error) {
+	noIntroFile := strings.ReplaceAll(videoFile, path.Base(videoFile), "NOINTRO_"+path.Base(videoFile))
+	start := formatDuration(ts_start)
+	end := formatDuration(ts_end)
+	args := fmt.Sprintf("-i %s -ss %s -to %s -c:v copy -c:a copy %s", videoFile, start, end, noIntroFile)
+	fmt.Println(args)
+	// ffmpeg -i videofile.mp4 -ss <starttime> -to <endtime> -c:v copy -c:a copy <outputfile.mp4>
+	err := RunAndParseFfmpeg(args, GetVideoPropertiesWithFFProbe(videoFile))
+	return noIntroFile, err
+}
+
+func CutFragmentFromVideo(startFrameFile, endFrameFile, videoFile string) (string, error) {
+	start, err := SearchForFrame(videoFile, startFrameFile)
+	if err != nil {
+		return "", err
+	}
+	stop, err := SearchForFrame(videoFile, endFrameFile)
+	if err != nil {
+		return "", err
+	}
+	return cutFromVideo(start, stop, videoFile)
 }
