@@ -33,14 +33,20 @@ var (
 func main() {
 	config := getConfigurationFromArguments()
 
-	for _, file := range config.FilesToConvert {
-		if config.OnlyCut {
-			_, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, file.Name())
+	if config.File != "" {
+		if config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
+			_, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, config.File)
 			if err != nil {
 				fmt.Printf("could not cut fragment from output: %s\n", err)
 			}
-			os.Exit(0)
 		}
+		if config.DumpFramesAt != "" {
+			timestamps := strings.FieldsFunc(config.DumpFramesAt, func(c rune) bool { return c == ',' })
+		}
+		return
+	}
+
+	for _, file := range config.FilesToConvert {
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()

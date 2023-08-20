@@ -59,6 +59,8 @@ type Config struct {
 	CutStart        string
 	CutEnd          string
 	OnlyCut         bool
+	DumpFramesAt    string
+	File            string
 }
 
 func getConfigurationFromArguments() Config {
@@ -89,9 +91,12 @@ func getConfigurationFromArguments() Config {
 	flag.StringVar(&config.H26xTune, "h26x-tune", "animation", "The tuning to use for h26x encoding. (film/animation/fastdecode/zerolatency/none)")
 	flag.StringVar(&config.H26xPreset, "h26x-preset", "fast", "The preset to use for h26x encoding. (fast/medium/slow/etc..)")
 	flag.BoolVar(&config.H265, "h265", false, "Use H265 encoding.")
+	flag.StringVar(&config.File, "file", "", "The specific file to operate on for cutting and frame dumping.")
 	flag.BoolVar(&config.OnlyCut, "onlycut", false, "Only cut, don't convert.")
 	flag.StringVar(&config.CutStart, "cutstart", "", "A jpg of the frame to look for in the video to determine the start of the fragment to cut out.")
 	flag.StringVar(&config.CutEnd, "cutend", "", "A jpg of the frame to look for in the video to determine the end of the fragment to cut out.")
+	flag.StringVar(&config.DumpFramesAt, "dumpframesat", "", "A comma-separated list of timestamps you want to make jpg dumps for.")
+
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, `
  This tool is for converting mkv files to an mp4 that has the subs hardcoded into the video.

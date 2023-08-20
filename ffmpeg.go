@@ -256,3 +256,8 @@ func CutFragmentFromVideo(startFrameFile, endFrameFile, videoFile string) (strin
 	fmt.Printf("Cutting out fragment between %v and %v\n", start, stop)
 	return cutFromVideo(start, stop, videoFile)
 }
+
+func DumpFrameFromVideoAt(videoFile, time string) (string, error) {
+	timestr := strings.ReplaceAll(time, ":", "-")
+	jpegname := strings.ReplaceAll(videoFile, path.Base(videoFile), "FRAME_"+timestr+"_"+path.Base(videoFile))
+}
