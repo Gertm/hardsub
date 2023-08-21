@@ -61,6 +61,8 @@ type Config struct {
 	OnlyCut         bool
 	DumpFramesAt    string
 	File            string
+	ForceAudioTrack int
+	ForceSubsTrack  int
 }
 
 func getConfigurationFromArguments() Config {
@@ -95,8 +97,13 @@ func getConfigurationFromArguments() Config {
 	flag.BoolVar(&config.OnlyCut, "onlycut", false, "Only cut, don't convert.")
 	flag.StringVar(&config.CutStart, "cutstart", "", "A jpg of the frame to look for in the video to determine the start of the fragment to cut out.")
 	flag.StringVar(&config.CutEnd, "cutend", "", "A jpg of the frame to look for in the video to determine the end of the fragment to cut out.")
+<<<<<<< HEAD
 	flag.StringVar(&config.DumpFramesAt, "dumpframesat", "", "A comma-separated list of timestamps you want to make jpg dumps for.")
 
+=======
+	flag.IntVar(&config.ForceAudioTrack, "force-audio-track", -1, "Force the audio track to use. (for example: 4)")
+	flag.IntVar(&config.ForceSubsTrack, "force-subs-track", -1, "Force the subs track to use. (for example: 3)")
+>>>>>>> ab5bd62 (Added options to force certain audio or subtitle tracks)
 	flag.Usage = func() {
 		fmt.Fprintln(os.Stderr, `
  This tool is for converting mkv files to an mp4 that has the subs hardcoded into the video.
