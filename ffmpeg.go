@@ -268,3 +268,35 @@ func DumpFrameFromVideoAt(videoFile, time string) (string, error) {
 	err := RunAndParseFfmpeg(cmd, GetVideoPropertiesWithFFProbe(videoFile))
 	return jpegname, err
 }
+
+func AddChaptersToVideo() {
+	/*
+		https://ikyle.me/blog/2020/add-mp4-chapters-ffmpeg
+
+		;FFMETADATA1
+		major_brand=isom
+		minor_version=512
+		compatible_brands=isomiso2avc1mp41
+		encoder=Lavf60.3.100
+
+		[CHAPTER]
+		TIMEBASE=1/1000
+		START=1
+		END=448000
+		title=Pre Intro
+
+		[CHAPTER]
+		TIMEBASE=1/1000
+		START=448001
+		END= 3883999
+		title=Intro
+
+		[CHAPTER]
+		TIMEBASE=1/1000
+		START=3884000
+		END=4418000
+		title=Post Intro
+
+
+	*/
+}
