@@ -42,6 +42,7 @@ func main() {
 		}
 		if config.DumpFramesAt != "" {
 			timestamps := strings.FieldsFunc(config.DumpFramesAt, func(c rune) bool { return c == ',' })
+			fmt.Println(timestamps)
 		}
 		return
 	}

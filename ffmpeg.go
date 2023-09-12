@@ -260,4 +260,6 @@ func CutFragmentFromVideo(startFrameFile, endFrameFile, videoFile string) (strin
 func DumpFrameFromVideoAt(videoFile, time string) (string, error) {
 	timestr := strings.ReplaceAll(time, ":", "-")
 	jpegname := strings.ReplaceAll(videoFile, path.Base(videoFile), "FRAME_"+timestr+"_"+path.Base(videoFile))
+	fmt.Println(timestr, jpegname)
+	return "ok", nil
 }
