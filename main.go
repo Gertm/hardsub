@@ -37,12 +37,18 @@ func main() {
 		if config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
 			_, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, config.File)
 			if err != nil {
-				fmt.Printf("could not cut fragment from output: %s\n", err)
+				fmt.Fprintf(os.Stderr, "could not cut fragment from output: %s\n", err)
 			}
 		}
 		if config.DumpFramesAt != "" {
 			timestamps := strings.FieldsFunc(config.DumpFramesAt, func(c rune) bool { return c == ',' })
+			// ffmpeg -ss 00:01:00 -i input.mp4 -frames:v 1 output.png
 			fmt.Println(timestamps)
+			for _, timestamp := range timestamps {
+				if name, err := DumpFrameFromVideoAt(config.File, timestamp); err != nil {
+					fmt.Fprintln(os.Stderr, name, err)
+				}
+			}
 		}
 		return
 	}

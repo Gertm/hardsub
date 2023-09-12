@@ -214,8 +214,8 @@ func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, err
 	start := formatDuration(ts_start)
 	end := formatDuration(ts_end)
 	// first make the pre-fragment video
-	firstArgs := fmt.Sprintf("-y -i %s -ss 00:00:00 -to %s -c:v copy -c:a copy %s", videoFile, start, firstPart)
-	lastArgs := fmt.Sprintf("-y -i %s -ss %s -to %s -c:v copy -c:a copy %s", videoFile, end, videoProps.Duration, lastPart)
+	firstArgs := fmt.Sprintf("-y -i %s -ss 00:00:00 -to %s -c:v copy -c:a aac %s", videoFile, start, firstPart)
+	lastArgs := fmt.Sprintf("-y -i %s -ss %s -to %s -c:v copy -c:a aac %s", videoFile, end, videoProps.Duration, lastPart)
 	concatInput := fmt.Sprintf("file '%s'\nfile '%s'", firstPart, lastPart)
 	os.WriteFile("concat.txt", []byte(concatInput), 0x644)
 	// defer os.RemoveAll("concat.txt")
@@ -259,7 +259,12 @@ func CutFragmentFromVideo(startFrameFile, endFrameFile, videoFile string) (strin
 
 func DumpFrameFromVideoAt(videoFile, time string) (string, error) {
 	timestr := strings.ReplaceAll(time, ":", "-")
-	jpegname := strings.ReplaceAll(videoFile, path.Base(videoFile), "FRAME_"+timestr+"_"+path.Base(videoFile))
+
+	jpegname := strings.ReplaceAll(videoFile, path.Base(videoFile), "FRAME_"+timestr+"_"+strings.ReplaceAll(path.Base(videoFile), path.Ext(videoFile), ".png"))
+
 	fmt.Println(timestr, jpegname)
-	return "ok", nil
+	cmd := "-ss " + time + " -i " + videoFile + " -frames:v 1 " + jpegname
+	fmt.Println("ffmpeg", cmd)
+	err := RunAndParseFfmpeg(cmd, GetVideoPropertiesWithFFProbe(videoFile))
+	return jpegname, err
 }
