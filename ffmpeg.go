@@ -280,7 +280,7 @@ func AddChaptersToVideo() {
 		encoder=Lavf60.3.100
 
 		[CHAPTER]
-		TIMEBASE=1/1000
+		TIMEBASE=1/1000 // this needs to stay this way because of ffmpeg. Only milliseconds allowed.
 		START=1
 		END=448000
 		title=Pre Intro
