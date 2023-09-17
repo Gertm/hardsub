@@ -217,7 +217,7 @@ func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, err
 	firstArgs := fmt.Sprintf("-y -i %s -ss 00:00:00 -to %s -c:v libx264 -c:a aac %s", videoFile, start, firstPart)
 	lastArgs := fmt.Sprintf("-y -i %s -ss %s -to %s -c:v libx264 -c:a aac %s", videoFile, end, videoProps.Duration, lastPart)
 	concatInput := fmt.Sprintf("file '%s'\nfile '%s'", firstPart, lastPart)
-	os.WriteFile("concat.txt", []byte(concatInput), 0x644)
+	os.WriteFile("concat.txt", []byte(concatInput), 0o644)
 	// defer os.RemoveAll("concat.txt")
 	concatArgs := fmt.Sprintf("-y -f concat -i concat.txt -c:v libx264 -c:a aac %s", noIntroFile)
 	fmt.Println("ffmpeg", firstArgs, "\nffmpeg", lastArgs, "\nffmpeg", concatArgs)
