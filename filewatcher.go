@@ -26,6 +26,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+var PollInterval = 1
+
 func startProcess(path string, arguments string) error {
 	if arguments == "" {
 		cmd := exec.Command(path)
@@ -46,6 +48,9 @@ func startProcess(path string, arguments string) error {
 	}
 }
 
+// This is a bit of a naive way of checking if the file is done writing.
+// Yet it works quite well in practise for me. Then again, I have quite
+// reliable internet, so that helps. So this can certainly be improved.
 func waitForUploadToFinish(file string) error {
 	var size int64
 	size = 0
@@ -56,7 +61,7 @@ func waitForUploadToFinish(file string) error {
 		monitored_files.Delete(file)
 	}()
 	for {
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Duration(PollInterval) * time.Second)
 		fi, err := os.Stat(file)
 		if err != nil {
 			return err
@@ -104,6 +109,9 @@ func watchForFiles(watchfolder string) {
 			case event, ok := <-watcher.Events:
 				if !ok {
 					return
+				}
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					log.Print("WRITE ")
 				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					if _, ok := monitored_files.Load(event.Name); ok {
