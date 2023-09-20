@@ -206,16 +206,17 @@ func formatDuration(d time.Duration) string {
 }
 
 // returns the full name of the videoFile with the fragment cut out.
-func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, error) {
-	noIntroFile := strings.ReplaceAll(videoFile, path.Base(videoFile), "NOINTRO_"+path.Base(videoFile))
-	firstPart := strings.ReplaceAll(videoFile, path.Base(videoFile), "first_"+path.Base(videoFile))
-	lastPart := strings.ReplaceAll(videoFile, path.Base(videoFile), "last_"+path.Base(videoFile))
-	videoProps := GetVideoPropertiesWithFFProbe(videoFile)
+func cutFromVideo(ts_start, ts_end time.Duration, config Config) (string, error) {
+	noIntroFile := strings.ReplaceAll(config.File, path.Base(config.File), "NOINTRO_"+path.Base(config.File))
+	firstPart := strings.ReplaceAll(config.File, path.Base(config.File), "first_"+path.Base(config.File))
+	lastPart := strings.ReplaceAll(config.File, path.Base(config.File), "last_"+path.Base(config.File))
+	videoProps := GetVideoPropertiesWithFFProbe(config.File)
 	start := formatDuration(ts_start)
 	end := formatDuration(ts_end)
 	// first make the pre-fragment video
-	firstArgs := fmt.Sprintf("-y -i %s -ss 00:00:00 -to %s -c:v libx264 -c:a aac %s", videoFile, start, firstPart)
-	lastArgs := fmt.Sprintf("-y -i %s -ss %s -to %s -c:v libx264 -c:a aac %s", videoFile, end, videoProps.Duration, lastPart)
+	// TODO: we need to put the config params for the video encoding also in here.
+	firstArgs := fmt.Sprintf("-y -i %s -ss 00:00:00 -to %s -c:v libx264 -c:a aac %s", config.File, start, firstPart)
+	lastArgs := fmt.Sprintf("-y -i %s -ss %s -to %s -c:v libx264 -c:a aac %s", config.File, end, videoProps.Duration, lastPart)
 	concatInput := fmt.Sprintf("file '%s'\nfile '%s'", firstPart, lastPart)
 	os.WriteFile("concat.txt", []byte(concatInput), 0o644)
 	// defer os.RemoveAll("concat.txt")
@@ -239,22 +240,22 @@ func cutFromVideo(ts_start, ts_end time.Duration, videoFile string) (string, err
 	return noIntroFile, nil
 }
 
-func CutFragmentFromVideo(startFrameFile, endFrameFile, videoFile string) (string, error) {
+func CutFragmentFromVideo(config Config) (string, error) {
 	fmt.Println("Looking for start of fragment...")
-	start, err := SearchForFrame(videoFile, startFrameFile)
+	start, err := SearchForFrame(config.File, config.CutStart)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
 	fmt.Println("Found start frame at", start)
 	fmt.Println("Looking for end of fragment...")
-	stop, err := SearchForFrame(videoFile, endFrameFile)
+	stop, err := SearchForFrame(config.File, config.CutEnd)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
 	fmt.Printf("Cutting out fragment between %v and %v\n", start, stop)
-	return cutFromVideo(start, stop, videoFile)
+	return cutFromVideo(start, stop, config)
 }
 
 func DumpFrameFromVideoAt(videoFile, time string) (string, error) {

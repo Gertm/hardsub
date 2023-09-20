@@ -35,7 +35,7 @@ func main() {
 
 	if config.File != "" {
 		if config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
-			_, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, config.File)
+			_, err := CutFragmentFromVideo(config)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "could not cut fragment from output: %s\n", err)
 			}
@@ -182,7 +182,7 @@ func convert_file(videofile string, config Config) (string, error) {
 	}
 
 	if !config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
-		cutFile, err := CutFragmentFromVideo(config.CutStart, config.CutEnd, outputFile)
+		cutFile, err := CutFragmentFromVideo(config)
 		if err != nil {
 			fmt.Printf("could not cut fragment from output: %s\n", err)
 		} else {
