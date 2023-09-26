@@ -54,8 +54,8 @@ func main() {
 	}
 	if config.WathForFiles {
 		watchForFiles(config.SourceFolder, func() error {
-			newConfig := getConfigurationFromArguments()
-			return ConvertAllTheThings(newConfig)
+			PrepareFolderForConversion(&config)
+			return ConvertAllTheThings(config)
 		})
 	} else {
 		if err := ConvertAllTheThings(config); err != nil {

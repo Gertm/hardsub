@@ -135,3 +135,22 @@ func getConfigurationFromArguments() Config {
 	}
 	return config
 }
+
+func PrepareFolderForConversion(config *Config) {
+	if config.Detox {
+		fmt.Print("Detoxing folder...")
+		detoxWords := strings.Split(config.RemoveWords, ",")
+		if err := DetoxMkvsInFolder(config.SourceFolder, detoxWords...); err != nil {
+			log.Fatal("Cannot detox folder?!", err)
+		}
+		fmt.Print("done.\n")
+	}
+	files, err := os.ReadDir(config.SourceFolder)
+	if err != nil {
+		log.Fatal(err)
+	}
+	config.FilesToConvert = files
+	if VERBOSE {
+		litter.Dump(config)
+	}
+}
