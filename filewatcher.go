@@ -127,6 +127,7 @@ func watchForFiles(watchfolder string, f func() error) {
 								// Could not wait for the file correctly. Something must have gone awry.
 								log.Println(err)
 							} else {
+								count -= 1
 								if count <= 0 {
 									log.Println("No more files being written to.")
 									if err := f(); err != nil {
