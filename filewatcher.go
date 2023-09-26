@@ -110,9 +110,6 @@ func watchForFiles(watchfolder string, f func() error) {
 				if !ok {
 					return
 				}
-				if event.Op&fsnotify.Write == fsnotify.Write {
-					log.Print("WRITE ")
-				}
 				if event.Op&fsnotify.Create == fsnotify.Create {
 					if _, ok := monitored_files.Load(event.Name); ok {
 						// already watching this file
@@ -136,8 +133,7 @@ func watchForFiles(watchfolder string, f func() error) {
 										log.Println(err)
 									}
 								} else {
-									log.Printf(".")
-									time.Sleep(3 * time.Second)
+									log.Println("Some files are still being written to...", count)
 								}
 							}
 						}
