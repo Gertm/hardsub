@@ -52,6 +52,7 @@ func main() {
 		}
 		return
 	}
+	// TODO: rework this mess.
 	if config.WathForFiles {
 		watchForFiles(config.SourceFolder, func() error {
 			PrepareFolderForConversion(&config)
