@@ -86,7 +86,7 @@ var (
 	monitored_files sync.Map
 )
 
-func watchForFiles(watchfolder string) {
+func watchForFiles(watchfolder string, f func() error) {
 	count = 0
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -132,7 +132,9 @@ func watchForFiles(watchfolder string) {
 							} else {
 								if count <= 0 {
 									log.Println("No more files being written to.")
-									// start the converting here.
+									if err := f(); err != nil {
+										log.Println(err)
+									}
 								} else {
 									log.Printf(".")
 									time.Sleep(3 * time.Second)

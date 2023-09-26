@@ -52,22 +52,35 @@ func main() {
 		}
 		return
 	}
+	if config.WathForFiles {
+		watchForFiles(config.SourceFolder, func() error {
+			newConfig := getConfigurationFromArguments()
+			return ConvertAllTheThings(newConfig)
+		})
+	} else {
+		if err := ConvertAllTheThings(config); err != nil {
+			log.Fatal(err)
+		}
+	}
+	fmt.Println("Done!")
+}
 
+func ConvertAllTheThings(config Config) error {
 	for _, file := range config.FilesToConvert {
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()
 			_, err := convert_file(fullpath, config)
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 			if config.FirstOnly {
 				fmt.Println("Done!")
-				return
+				return nil
 			}
 		}
 	}
-	fmt.Println("Done!")
+	return nil
 }
 
 // TODO: This needs to be split up in smaller chunks, it's way too big now.

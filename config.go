@@ -63,6 +63,7 @@ type Config struct {
 	File            string
 	ForceAudioTrack int
 	ForceSubsTrack  int
+	WathForFiles    bool
 }
 
 func getConfigurationFromArguments() Config {
@@ -95,6 +96,7 @@ func getConfigurationFromArguments() Config {
 	flag.BoolVar(&config.H265, "h265", false, "Use H265 encoding.")
 	flag.StringVar(&config.File, "file", "", "The specific file to operate on for cutting and frame dumping.")
 	flag.BoolVar(&config.OnlyCut, "onlycut", false, "Only cut, don't convert.")
+	flag.BoolVar(&config.WathForFiles, "watch", false, "Watch for files in the folder and convert them as they appear.")
 	flag.StringVar(&config.CutStart, "cutstart", "", "A jpg of the frame to look for in the video to determine the start of the fragment to cut out.")
 	flag.StringVar(&config.CutEnd, "cutend", "", "A jpg of the frame to look for in the video to determine the end of the fragment to cut out.")
 	flag.StringVar(&config.DumpFramesAt, "dumpframesat", "", "A comma-separated list of timestamps you want to make jpg dumps for.")
