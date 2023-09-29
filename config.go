@@ -28,42 +28,79 @@ import (
 )
 
 type Config struct {
-	AudioLang       string
-	ScriptPath      string
-	SubsLang        string
-	SubsName        string
-	TargetFolder    string
-	OriginalsFolder string
-	H26xTune        string
-	H26xPreset      string
-	PostCmd         string
-	PostSubExtract  string
-	Extension       string
-	RemoveWords     string
-	SourceFolder    string
-	FilesToConvert  []fs.DirEntry
-	Crf             int
-	ScpPort         int
-	ExtractFonts    bool
-	FirstOnly       bool
-	Mkv             bool
-	H265            bool
-	RunDirectly     bool
-	KeepSubs        bool
-	CleanupSubs     bool
-	Verbose         bool
-	ForOldDevices   bool
-	FastVersion     bool
-	KeepSlowVersion bool
-	Detox           bool
-	CutStart        string
-	CutEnd          string
-	OnlyCut         bool
-	DumpFramesAt    string
-	File            string
-	ForceAudioTrack int
-	ForceSubsTrack  int
-	WathForFiles    bool
+	AudioLang       string `koanf:"audiolang"`
+	ScriptPath      string `koanf:"scriptpath"`
+	SubsLang        string `koanf:"subslang"`
+	SubsName        string `koanf:"subsname"`
+	TargetFolder    string `koanf:"targetfolder"`
+	OriginalsFolder string `koanf:"originalsfolder"`
+	H26xTune        string `koanf:"h26xtune"`
+	H26xPreset      string `koanf:"h26xpreset"`
+	PostCmd         string `koanf:"postcmd"`
+	PostSubExtract  string `koanf:"postsubextract"`
+	Extension       string `koanf:"extension"`
+	RemoveWords     string `koanf:"removewords"`
+	SourceFolder    string `koanf:"sourcefolder"`
+	filesToConvert  []fs.DirEntry
+	Crf             int    `koanf:"crf"`
+	ExtractFonts    bool   `koanf:"extractfonts"`
+	FirstOnly       bool   `koanf:"firstonly"`
+	Mkv             bool   `koanf:"mkv"`
+	H265            bool   `koanf:"h265"`
+	RunDirectly     bool   `koanf:"rundirectly"`
+	KeepSubs        bool   `koanf:"keepsubs"`
+	CleanupSubs     bool   `koanf:"cleanupsubs"`
+	Verbose         bool   `koanf:"verbose"`
+	ForOldDevices   bool   `koanf:"forolddevices"`
+	FastVersion     bool   `koanf:"fastversion"`
+	KeepSlowVersion bool   `koanf:"keepslowversion"`
+	Detox           bool   `koanf:"detox"`
+	CutStart        string `koanf:"cutstart"`
+	CutEnd          string `koanf:"cutend"`
+	OnlyCut         bool   `koanf:"onlycut"`
+	DumpFramesAt    string `koanf:"dumpframesat"`
+	File            string `koanf:"file"`
+	ForceAudioTrack int    `koanf:"forceaudiotrack"`
+	ForceSubsTrack  int    `koanf:"forcesubstrack"`
+	WathForFiles    bool   `koanf:"wathforfiles"`
+}
+
+func DefaultConfig() Config {
+	return Config{
+		AudioLang:       "ja",
+		ScriptPath:      "",
+		SubsLang:        "en",
+		SubsName:        "subtitles",
+		TargetFolder:    "converted",
+		OriginalsFolder: "originals",
+		H26xTune:        "animation",
+		H26xPreset:      "fast",
+		PostCmd:         "",
+		PostSubExtract:  "",
+		Extension:       "mkv",
+		RemoveWords:     "SubsPlease,EMBER",
+		Crf:             18,
+		ExtractFonts:    true,
+		FirstOnly:       false,
+		Mkv:             true,
+		H265:            false,
+		RunDirectly:     true,
+		KeepSubs:        false,
+		CleanupSubs:     false,
+		Verbose:         false,
+		ForOldDevices:   false,
+		FastVersion:     false,
+		KeepSlowVersion: false,
+		Detox:           true,
+		CutStart:        "",
+		CutEnd:          "",
+		OnlyCut:         false,
+		DumpFramesAt:    "",
+		File:            "",
+		ForceAudioTrack: -1,
+		ForceSubsTrack:  -1,
+		WathForFiles:    false,
+	}
 }
 
 func getConfigurationFromArguments() Config {
@@ -129,7 +166,7 @@ func getConfigurationFromArguments() Config {
 	if err != nil {
 		log.Fatal(err)
 	}
-	config.FilesToConvert = files
+	config.filesToConvert = files
 	if VERBOSE {
 		litter.Dump(config)
 	}
@@ -149,7 +186,7 @@ func PrepareFolderForConversion(config *Config) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	config.FilesToConvert = files
+	config.filesToConvert = files
 	if VERBOSE {
 		litter.Dump(config)
 	}

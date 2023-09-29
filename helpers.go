@@ -51,7 +51,7 @@ func LogF(str string, args ...interface{}) {
 func DetoxFilename(filename string, remove ...string) string {
 	baseName := path.Base(filename)
 	for _, r := range remove {
-		baseName = strings.Replace(baseName, r, "", -1)
+		baseName = strings.ReplaceAll(baseName, r, "")
 	}
 	var sb strings.Builder
 	justWroteUnderscore := true // don't write underscores at the start

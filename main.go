@@ -66,7 +66,7 @@ func main() {
 }
 
 func ConvertAllTheThings(config Config) error {
-	for _, file := range config.FilesToConvert {
+	for _, file := range config.filesToConvert {
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()
