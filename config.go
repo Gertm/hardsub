@@ -162,6 +162,9 @@ func getConfigurationFromArguments() Config {
 		}
 		fmt.Print("done.\n")
 	}
+	if flag.Arg(0) == "loadconfig" {
+		InitConfig()
+	}
 	files, err := os.ReadDir(config.SourceFolder)
 	if err != nil {
 		log.Fatal(err)
