@@ -31,29 +31,30 @@ var (
 )
 
 func main() {
-	config := getConfigurationFromArguments()
+	InitConfig()
+	LoadConfig()
 
-	if config.File != "" {
-		if config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
+	if config.arguments.File != "" {
+		if config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
 			_, err := CutFragmentFromVideo(config)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "could not cut fragment from output: %s\n", err)
 			}
 		}
-		if config.DumpFramesAt != "" {
-			timestamps := strings.FieldsFunc(config.DumpFramesAt, func(c rune) bool { return c == ',' })
+		if config.arguments.DumpFramesAt != "" {
+			timestamps := strings.FieldsFunc(config.arguments.DumpFramesAt, func(c rune) bool { return c == ',' })
 			// ffmpeg -ss 00:01:00 -i input.mp4 -frames:v 1 output.png
 			fmt.Println(timestamps)
 			for _, timestamp := range timestamps {
-				if name, err := DumpFrameFromVideoAt(config.File, timestamp); err != nil {
+				if name, err := DumpFrameFromVideoAt(config.arguments.File, timestamp); err != nil {
 					fmt.Fprintln(os.Stderr, name, err)
 				}
 			}
 		}
 		return
 	}
-	if config.WathForFiles {
-		watchForFiles(config.SourceFolder, func() error {
+	if config.WatchForFiles {
+		watchForFiles(config.arguments.SourceFolder, func() error {
 			PrepareFolderForConversion(&config)
 			return ConvertAllTheThings(config)
 		})
@@ -194,7 +195,7 @@ func convert_file(videofile string, config Config) (string, error) {
 		}
 	}
 
-	if !config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
+	if !config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
 		cutFile, err := CutFragmentFromVideo(config)
 		if err != nil {
 			fmt.Printf("could not cut fragment from output: %s\n", err)

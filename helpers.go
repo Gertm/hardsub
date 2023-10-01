@@ -276,11 +276,11 @@ func SelectTracksWithMkvMerge(path string, config Config) (*SelectedTracks, erro
 	if output.SubsTrack == -1 && len(subsTracks) == 1 {
 		output.SubsTrack = subsTracks[0]
 	}
-	if config.ForceAudioTrack != -1 {
-		output.AudioTrack = config.ForceAudioTrack
+	if config.arguments.ForceAudioTrack != -1 {
+		output.AudioTrack = config.arguments.ForceAudioTrack
 	}
-	if config.ForceSubsTrack != -1 {
-		output.SubsTrack = config.ForceSubsTrack
+	if config.arguments.ForceSubsTrack != -1 {
+		output.SubsTrack = config.arguments.ForceSubsTrack
 	}
 	if VERBOSE {
 		litter.Dump(output)
