@@ -25,7 +25,11 @@ fully uploaded.
 - Searching for the intro part of the video and cutting it out of the hardsubbed file. This will require the user to
 create a couple of screenshots so the tool knows what to look for.
 - Simple notification support, so you can get notified when the video conversion is done.
-
+- There are no tests. This needs to be fixed, but it's quite hard to do that after the fact. The application isn't
+written with tests in mind, it's not easy to add them now. Then again, this is the first iteration of this tool. With
+the next iteration, I need to make sure we're at least thinking about tests.
+- Everything is one package. Not sure if I really need to split up this into multiple packages, but the code now isn't layed out
+all that well. This could improve. (v2?)
 
 ## Requirements
 You need ffmpeg, ffprobe and mkvtoolnix cli programs installed and on your $PATH.  

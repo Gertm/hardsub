@@ -291,7 +291,7 @@ func SelectTracksWithMkvMerge(path string, config Config) (*SelectedTracks, erro
 func FindInPath(exe string) (string, error) {
 	path, err := exec.LookPath(exe)
 	if err != nil {
-		fmt.Println("Could not find path")
+		fmt.Printf("Could not find %s in $PATH\n", exe)
 		return "", err
 	}
 	return path, nil

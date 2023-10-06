@@ -34,6 +34,13 @@ func main() {
 	InitConfig()
 	LoadConfig()
 
+	// Do we really need to start if these aren't available?
+	for _, exe := range []string{"ffmpeg", "ffprobe", "mkvmerge"} {
+		if _, err := FindInPath(exe); err != nil {
+			return
+		}
+	}
+
 	if config.arguments.File != "" {
 		if config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
 			_, err := CutFragmentFromVideo(config)
