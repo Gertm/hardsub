@@ -59,6 +59,20 @@ func main() {
 			return ConvertAllTheThings(config)
 		})
 	} else {
+
+		if config.Detox {
+			fmt.Print("Detoxing folder...")
+			detoxWords := strings.Split(config.RemoveWords, ",")
+			if err := DetoxMkvsInFolder(config.arguments.SourceFolder, detoxWords...); err != nil {
+				log.Fatal("Cannot detox folder?!", err)
+			}
+			fmt.Print("done.\n")
+		}
+		files, err := os.ReadDir(config.arguments.SourceFolder)
+		if err != nil {
+			log.Fatal(err)
+		}
+		config.filesToConvert = files
 		if err := ConvertAllTheThings(config); err != nil {
 			log.Fatal(err)
 		}
@@ -162,7 +176,6 @@ func convert_file(videofile string, config Config) (string, error) {
 			subfix.FixSubs(subsfile, 22, true, VERBOSE)
 		}
 		if config.ExtractFonts {
-			// writeExtractFontsCommand(config.TargetFolder, videofile, config.ScriptFile)
 			if err := extractFonts(config.TargetFolder, videofile); err != nil {
 				return "", fmt.Errorf("error extracting subs: %w", err)
 			}

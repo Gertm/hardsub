@@ -82,7 +82,7 @@ func DefaultConfig() Config {
 		Crf:             18,
 		ExtractFonts:    true,
 		FirstOnly:       false,
-		Mkv:             true,
+		Mkv:             false,
 		H265:            false,
 		KeepSubs:        false,
 		CleanupSubs:     false,

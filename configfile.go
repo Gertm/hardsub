@@ -12,7 +12,6 @@ import (
 	"github.com/knadh/koanf/providers/posflag"
 	"github.com/knadh/koanf/providers/structs"
 	"github.com/knadh/koanf/v2"
-	"github.com/sanity-io/litter"
 	flag "github.com/spf13/pflag"
 )
 
@@ -84,15 +83,6 @@ func LoadConfig() {
 	if config.arguments.SourceFolder == "" {
 		config.arguments.SourceFolder = wd
 	}
-
-	litter.Dump(config)
-	litter.Dump(config.arguments)
-	// fp.Watch(func(event interface{}, err error) {
-	// 	if err != nil {
-	// 		log.Println("Error in watch callback", err)
-	// 	}
-	// 	ReadConfigFile(fp)
-	// })
 }
 
 func ReadConfigFile(fp *file.File) {
