@@ -48,13 +48,15 @@ func InitConfig() {
 func configFilename() string {
 	ucd, err := os.UserConfigDir()
 	if err != nil {
-		log.Fatal(err)
+		LogError("could not get user config dir. What kind of system are you running?", err)
+		os.Exit(1)
 	}
 	configDir := filepath.Join(ucd, "hardsub")
 	if _, err := os.Stat(configDir); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(configDir, os.ModePerm)
 		if err != nil {
-			log.Println(err)
+			LogError("can't make the config folder:", configDir, err)
+			os.Exit(1)
 		}
 	}
 	return filepath.Join(configDir, "hardsub.toml")
@@ -84,7 +86,8 @@ func LoadConfig() {
 
 	ka := koanf.New(".")
 	if err := ka.Load(posflag.Provider(f, ".", ka), nil); err != nil {
-		log.Fatalf("error loading arguments: %v", err)
+		LogError("cannot load the command line arguments:", err)
+		os.Exit(1)
 	}
 	config.arguments = Arguments{}
 	config.arguments.File = ka.String("file")
@@ -103,7 +106,8 @@ func LoadConfig() {
 func ReadConfigFile(fp *file.File) {
 	koanfConfig = koanf.New(".")
 	if err := koanfConfig.Load(fp, toml.Parser()); err != nil {
-		log.Fatalln("Error loading config: ", err)
+		LogError("cannot load config file:", err)
+		os.Exit(1)
 	}
 	koanfConfig.Unmarshal("", &config)
 }

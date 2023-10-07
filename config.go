@@ -16,7 +16,6 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -100,16 +99,17 @@ func PrepareFolderForConversion(config *Config) {
 		fmt.Print("Detoxing folder...")
 		detoxWords := strings.Split(config.RemoveWords, ",")
 		if err := DetoxMkvsInFolder(config.arguments.SourceFolder, detoxWords...); err != nil {
-			log.Fatal("Cannot detox folder?!", err)
+			LogError("detoxing folder failed:", config.arguments.SourceFolder, err)
+			os.Exit(1)
 		}
 		fmt.Print("done.\n")
 	}
 	files, err := os.ReadDir(config.arguments.SourceFolder)
 	if err != nil {
-		log.Fatal(err)
+		LogError("cannot read folder:", config.arguments.SourceFolder, err)
 	}
 	config.filesToConvert = files
-	if VERBOSE {
+	if config.Verbose {
 		litter.Dump(config)
 	}
 }

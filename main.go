@@ -17,7 +17,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -25,10 +24,7 @@ import (
 	"github.com/gertm/hardsub/subfix"
 )
 
-var (
-	LastSelectedTracks *SelectedTracks
-	VERBOSE            bool
-)
+var LastSelectedTracks *SelectedTracks
 
 func main() {
 	InitConfig()
@@ -37,7 +33,11 @@ func main() {
 	// Do we really need to start if these aren't available?
 	for _, exe := range []string{"ffmpeg", "ffprobe", "mkvmerge"} {
 		if _, err := FindInPath(exe); err != nil {
+			fmt.Printf("Need to have %s on $PATH to work.\n", exe)
 			return
+		}
+		if config.Verbose {
+			fmt.Println("✅ Found", exe)
 		}
 	}
 
@@ -45,7 +45,7 @@ func main() {
 		if config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
 			_, err := CutFragmentFromVideo(config)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "could not cut fragment from output: %s\n", err)
+				LogError("could not cut fragment from output: %s\n", err)
 			}
 		}
 		if config.arguments.DumpFramesAt != "" {
@@ -68,20 +68,22 @@ func main() {
 	} else {
 
 		if config.Detox {
-			fmt.Print("Detoxing folder...")
+			Log("Detoxing folder...")
 			detoxWords := strings.Split(config.RemoveWords, ",")
 			if err := DetoxMkvsInFolder(config.arguments.SourceFolder, detoxWords...); err != nil {
-				log.Fatal("Cannot detox folder?!", err)
+				LogErrorln("Cannot detox folder?!", err)
 			}
-			fmt.Print("done.\n")
+			Log("done.")
 		}
 		files, err := os.ReadDir(config.arguments.SourceFolder)
 		if err != nil {
-			log.Fatal(err)
+			LogErrorln("Could not read files from", config.arguments.SourceFolder)
+			os.Exit(1)
 		}
 		config.filesToConvert = files
 		if err := ConvertAllTheThings(config); err != nil {
-			log.Fatal(err)
+			LogErrorln("Something went wrong while converting:", err)
+			os.Exit(1)
 		}
 	}
 	fmt.Println("Done!")
@@ -97,7 +99,7 @@ func ConvertAllTheThings(config Config) error {
 				return err
 			}
 			if config.FirstOnly {
-				fmt.Println("Done!")
+				Log("Done!")
 				return nil
 			}
 		}
@@ -111,7 +113,8 @@ func convert_file(videofile string, config Config) (string, error) {
 	Log("Converting", videofile)
 	output, err := SelectTracksWithMkvMerge(videofile, config)
 	if err != nil {
-		log.Fatal(err)
+		LogErrorln("Could not select tracks with mkvmerge:", err)
+		os.Exit(1)
 	}
 	LastSelectedTracks = output
 	// write the script to convert.
@@ -176,11 +179,11 @@ func convert_file(videofile string, config Config) (string, error) {
 		if config.PostSubExtract != "" {
 			postsubcmd := strings.ReplaceAll(config.PostSubExtract, "%%s", subsfile) + "\n"
 			if err := RunBashCommand(postsubcmd); err != nil {
-				fmt.Println("Post Sub Extraction Command failed, check your script?\n", err)
+				LogErrorln("Post Sub Extraction Command failed, check your script?\n", err)
 			}
 		}
 		if output.SubtitleType == SRT {
-			subfix.FixSubs(subsfile, 22, true, VERBOSE)
+			subfix.FixSubs(subsfile, 22, true, config.Verbose)
 		}
 		if config.ExtractFonts {
 			if err := extractFonts(config.TargetFolder, videofile); err != nil {

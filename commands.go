@@ -74,7 +74,7 @@ func OutputForCommandLst2(cmd ...string) (string, error) {
 }
 
 func OutputForBashCommand(cmd string) (string, error) {
-	if VERBOSE {
+	if config.Verbose {
 		fmt.Println("bash -c", cmd)
 	}
 	c := exec.Command("bash", "-c", cmd)

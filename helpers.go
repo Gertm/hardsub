@@ -30,22 +30,24 @@ import (
 	"github.com/sanity-io/litter"
 )
 
-func logV(format string, v ...interface{}) {
-	if VERBOSE {
-		log.Printf(format, v...)
+func logV(format string, v ...any) {
+	if config.Verbose {
+		fmt.Printf(format, v...)
 	}
 }
 
-func Log(msg ...interface{}) {
-	if VERBOSE {
-		log.Println(msg...)
+func Log(msg ...any) {
+	if config.Verbose {
+		fmt.Println(msg...)
 	}
 }
 
-func LogF(str string, args ...interface{}) {
-	if VERBOSE {
-		log.Printf(str, args...)
-	}
+func LogError(format string, v ...any) {
+	fmt.Fprintf(os.Stderr, format, v...)
+}
+
+func LogErrorln(msgs ...any) {
+	fmt.Fprintln(os.Stderr, msgs...)
 }
 
 func DetoxFilename(filename string, remove ...string) string {
@@ -70,6 +72,7 @@ func DetoxFilename(filename string, remove ...string) string {
 			sb.WriteRune(ch)
 			justWroteUnderscore = false
 		}
+
 	}
 	return path.Join(path.Dir(filename), sb.String())
 }
@@ -77,7 +80,8 @@ func DetoxFilename(filename string, remove ...string) string {
 func DetoxMkvsInFolder(foldername string, remove ...string) error {
 	toxic, err := os.ReadDir(foldername)
 	if err != nil {
-		log.Fatal(err)
+		LogErrorln("cannot read the filenames in folder", foldername, err)
+		os.Exit(1)
 	}
 	for _, f := range toxic {
 		fullname := path.Join(foldername, f.Name())
@@ -130,11 +134,11 @@ func createDirectoryIfNeeded(dirName string) error {
 func copyFontsToLocalFontsDir(sourcedir string) error {
 	files, err := os.ReadDir(sourcedir)
 	if err != nil {
-		log.Fatal("Cannot read the folder we just created?!", err)
+		LogErrorln("Cannot read the folder we just created?!", err)
 	}
 	userHome, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal("Cannot get our home directory!", err)
+		LogErrorln("Cannot get our home directory!", err)
 	}
 	dotFonts := path.Join(userHome, ".fonts")
 	for _, file := range files {
@@ -150,12 +154,13 @@ func copyFontsToLocalFontsDir(sourcedir string) error {
 func copyFile(src, dst string) {
 	fin, err := os.Open(src)
 	if err != nil {
-		log.Fatal(err)
+		LogErrorln("cannot open source file for copying", src, err)
 	}
 	defer fin.Close()
 
 	fout, err := os.Create(dst)
 	if err != nil {
+		LogErrorln("cannot create target file for copy:", dst, err)
 		log.Fatal(err)
 	}
 	defer fout.Close()
@@ -163,6 +168,7 @@ func copyFile(src, dst string) {
 	_, err = io.Copy(fout, fin)
 
 	if err != nil {
+		LogError("cannot copy %s to %s", src, dst)
 		log.Fatal(err)
 	}
 }
@@ -252,17 +258,17 @@ func SelectTracksWithMkvMerge(path string, config Config) (*SelectedTracks, erro
 				}
 				switch codec_id {
 				case "S_TEXT/ASS", "S_TEXT/SSA", "SAA/ASS":
-					if VERBOSE {
+					if config.Verbose {
 						fmt.Printf("%s has SSA subs\n", path)
 					}
 					output.SubtitleType = SSA_ASS
 				case "S_TEXT/UTF8":
-					if VERBOSE {
+					if config.Verbose {
 						fmt.Printf("%s has SRT subtitles\n", path)
 					}
 					output.SubtitleType = SRT
 				case "S_HDMV/PGS", "S_IMAGE/BMP", "S_DVDSUB", "S_VOBSUB":
-					if VERBOSE {
+					if config.Verbose {
 						fmt.Printf("%s has picture based subtitles\n", path)
 					}
 					output.SubtitleType = PICTURE
@@ -282,7 +288,7 @@ func SelectTracksWithMkvMerge(path string, config Config) (*SelectedTracks, erro
 	if config.arguments.ForceSubsTrack != -1 {
 		output.SubsTrack = config.arguments.ForceSubsTrack
 	}
-	if VERBOSE {
+	if config.Verbose {
 		litter.Dump(output)
 	}
 	return &output, nil
