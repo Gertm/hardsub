@@ -95,32 +95,6 @@ func DefaultConfig() Config {
 	}
 }
 
-func getConfigurationFromArguments() Config {
-	VERBOSE = config.Verbose
-	// TODO: this should not be in this function, it doesn't belong here.
-	// this should be done before we get which files we need to convert though.
-	if config.Detox {
-		fmt.Print("Detoxing folder...")
-		detoxWords := strings.Split(config.RemoveWords, ",")
-		if err := DetoxMkvsInFolder(config.arguments.SourceFolder, detoxWords...); err != nil {
-			log.Fatal("Cannot detox folder?!", err)
-		}
-		fmt.Print("done.\n")
-	}
-	if flag.Arg(0) == "loadconfig" {
-		InitConfig()
-	}
-	files, err := os.ReadDir(config.arguments.SourceFolder)
-	if err != nil {
-		log.Fatal(err)
-	}
-	config.filesToConvert = files
-	if VERBOSE {
-		litter.Dump(config)
-	}
-	return config
-}
-
 func PrepareFolderForConversion(config *Config) {
 	if config.Detox {
 		fmt.Print("Detoxing folder...")
