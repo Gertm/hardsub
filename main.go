@@ -30,7 +30,7 @@ func main() {
 	InitConfig()
 	LoadConfig()
 
-	// Do we really need to start if these aren't available?
+	// Can we really start if these aren't available?
 	for _, exe := range []string{"ffmpeg", "ffprobe", "mkvmerge"} {
 		if _, err := FindInPath(exe); err != nil {
 			fmt.Printf("Need to have %s on $PATH to work.\n", exe)
