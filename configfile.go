@@ -47,14 +47,14 @@ func InitConfig() {
 func configFilename() string {
 	ucd, err := os.UserConfigDir()
 	if err != nil {
-		LogError("could not get user config dir. What kind of system are you running?", err)
+		LogErrorln("could not get user config dir. What kind of system are you running?", err)
 		os.Exit(1)
 	}
 	configDir := filepath.Join(ucd, "hardsub")
 	if _, err := os.Stat(configDir); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(configDir, os.ModePerm)
 		if err != nil {
-			LogError("can't make the config folder:", configDir, err)
+			LogErrorln("can't make the config folder:", configDir, err)
 			os.Exit(1)
 		}
 	}
@@ -79,13 +79,14 @@ func LoadConfig() {
 	f.String("dumpframesat", "", "A comma-separated list of timestamps you want to make jpg dumps for.")
 	f.Int("force-audio-track", -1, "Force the audio track to use. (for example: 4)")
 	f.Int("force-subs-track", -1, "Force the subs track to use. (for example: 3)")
+	f.Bool("showtui", false, "Show the TUI")
 	wd, _ := os.Getwd()
 	f.String("sourcefolder", wd, "The folder in which to look for videos.")
 	f.Parse(os.Args[1:])
 
 	ka := koanf.New(".")
 	if err := ka.Load(posflag.Provider(f, ".", ka), nil); err != nil {
-		LogError("cannot load the command line arguments:", err)
+		LogErrorln("cannot load the command line arguments:", err)
 		os.Exit(1)
 	}
 	config.arguments = Arguments{}
@@ -97,6 +98,7 @@ func LoadConfig() {
 	config.arguments.ForceAudioTrack = ka.Int("force-audio-track")
 	config.arguments.ForceSubsTrack = ka.Int("force-subs-track")
 	config.arguments.SourceFolder = ka.String("sourcefolder")
+	config.arguments.ShowTui = ka.Bool("showtui")
 	if config.arguments.SourceFolder == "" {
 		config.arguments.SourceFolder = wd
 	}
@@ -105,7 +107,7 @@ func LoadConfig() {
 func ReadConfigFile(fp *file.File) {
 	koanfConfig = koanf.New(".")
 	if err := koanfConfig.Load(fp, toml.Parser()); err != nil {
-		LogError("cannot load config file:", err)
+		LogErrorln("cannot load config file:", err)
 		os.Exit(1)
 	}
 	koanfConfig.Unmarshal("", &config)

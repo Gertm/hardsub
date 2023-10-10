@@ -33,6 +33,7 @@ type Arguments struct {
 	File            string `koanf:"file"`
 	ForceAudioTrack int    `koanf:"forceaudiotrack"`
 	ForceSubsTrack  int    `koanf:"forcesubstrack"`
+	ShowTui         bool   `koanf:"showtui"`
 }
 
 type Config struct {
