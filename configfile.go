@@ -35,7 +35,7 @@ var (
 )
 
 func InitConfig() {
-	// TODO: Add a second possible config file .hardsub.toml in the current folder that could also
+	// TODO: Add a second possible config file .hardsub.toml in the current directory that could also
 	// be read after the general config.
 	// Then read the command line arguments as well and override the config again.
 	if !FileExists(configFilename()) {
@@ -54,7 +54,7 @@ func configFilename() string {
 	if _, err := os.Stat(configDir); errors.Is(err, os.ErrNotExist) {
 		err := os.Mkdir(configDir, os.ModePerm)
 		if err != nil {
-			LogErrorln("can't make the config folder:", configDir, err)
+			LogErrorln("can't make the config directory:", configDir, err)
 			os.Exit(1)
 		}
 	}
@@ -81,7 +81,7 @@ func LoadConfig() {
 	f.Int("force-subs-track", -1, "Force the subs track to use. (for example: 3)")
 	f.Bool("showtui", false, "Show the TUI")
 	wd, _ := os.Getwd()
-	f.String("sourcefolder", wd, "The folder in which to look for videos.")
+	f.String("sourcedir", wd, "The directory in which to look for videos.")
 	f.Parse(os.Args[1:])
 
 	ka := koanf.New(".")
@@ -97,10 +97,10 @@ func LoadConfig() {
 	config.arguments.DumpFramesAt = ka.String("dumpframesat")
 	config.arguments.ForceAudioTrack = ka.Int("force-audio-track")
 	config.arguments.ForceSubsTrack = ka.Int("force-subs-track")
-	config.arguments.SourceFolder = ka.String("sourcefolder")
+	config.arguments.SourceDirectory = ka.String("sourcedir")
 	config.arguments.ShowTui = ka.Bool("showtui")
-	if config.arguments.SourceFolder == "" {
-		config.arguments.SourceFolder = wd
+	if config.arguments.SourceDirectory == "" {
+		config.arguments.SourceDirectory = wd
 	}
 }
 

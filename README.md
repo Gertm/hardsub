@@ -3,7 +3,7 @@
 This is an FFmpeg command generator and runner for burning subs into videos.  
 Specifically made to convert mkv files with subtitles included into mp4 files with the subs burned into them.
 
-The idea is to navigate to the folder where you have stored the mkv files and just simply run this command.  
+The idea is to navigate to the directory where you have stored the mkv files and just simply run this command.  
 The defaults are set to my own use case. Nearly everything is configurable, so it shouldn't be hard to customize
 this to your needs.
 
@@ -20,7 +20,7 @@ Some of the code is still very much not cleaned up. (especially main.go) _You ar
 This project is basically "done" for me. It does the job and I'm happy with it. However, there are still more things to tinker with:  
 
 ## Currently working on or thinking about implementing these things:
-- Adding functionality for this program to wait for files to be written to a folder and convert them when they are
+- Adding functionality for this program to wait for files to be written to a directory and convert them when they are
 fully uploaded.
 - Searching for the intro part of the video and cutting it out of the hardsubbed file. This will require the user to
 create a couple of screenshots so the tool knows what to look for.

@@ -86,7 +86,7 @@ var (
 	monitored_files sync.Map
 )
 
-func watchForFiles(watchfolder string, f func() error) {
+func watchForFiles(watchDirectory string, f func() error) {
 	count = 0
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -96,10 +96,10 @@ func watchForFiles(watchfolder string, f func() error) {
 
 	var dir string
 
-	if watchfolder == "" {
+	if watchDirectory == "" {
 		dir, _ = os.Getwd()
 	} else {
-		dir = watchfolder
+		dir = watchDirectory
 	}
 
 	done := make(chan bool)
@@ -149,7 +149,7 @@ func watchForFiles(watchfolder string, f func() error) {
 		}
 	}()
 
-	log.Printf("Watching folder %v for incoming .mkv files.\n", dir)
+	log.Printf("Watching directory %v for incoming .mkv files.\n", dir)
 	err = watcher.Add(dir)
 	if err != nil {
 		log.Fatal(err)

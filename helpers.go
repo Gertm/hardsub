@@ -77,14 +77,14 @@ func DetoxFilename(filename string, remove ...string) string {
 	return path.Join(path.Dir(filename), sb.String())
 }
 
-func DetoxMkvsInFolder(foldername string, remove ...string) error {
-	toxic, err := os.ReadDir(foldername)
+func DetoxMkvsInDirectory(dirname string, remove ...string) error {
+	toxic, err := os.ReadDir(dirname)
 	if err != nil {
-		LogErrorln("cannot read the filenames in folder", foldername, err)
+		LogErrorln("cannot read the filenames in directory", dirname, err)
 		os.Exit(1)
 	}
 	for _, f := range toxic {
-		fullname := path.Join(foldername, f.Name())
+		fullname := path.Join(dirname, f.Name())
 		if strings.ToLower(path.Ext(fullname)) == ".mkv" {
 			dt := DetoxFilename(fullname, remove...)
 			if f.Name() != dt {
@@ -134,7 +134,7 @@ func createDirectoryIfNeeded(dirName string) error {
 func copyFontsToLocalFontsDir(sourcedir string) error {
 	files, err := os.ReadDir(sourcedir)
 	if err != nil {
-		LogErrorln("Cannot read the folder we just created?!", err)
+		LogErrorln("Cannot read the directory we just created?!", err)
 	}
 	userHome, err := os.UserHomeDir()
 	if err != nil {
@@ -178,23 +178,23 @@ func refreshFonts() {
 }
 
 func extractFonts(workingdir, videofile string) error {
-	attachmentsFolder := path.Join(workingdir, "attachments")
-	if err := createDirectoryIfNeeded(attachmentsFolder); err != nil {
+	attachmentsDirectory := path.Join(workingdir, "attachments")
+	if err := createDirectoryIfNeeded(attachmentsDirectory); err != nil {
 		return err
 	}
-	err := os.MkdirAll(attachmentsFolder, os.ModePerm)
+	err := os.MkdirAll(attachmentsDirectory, os.ModePerm)
 	if err != nil {
-		log.Printf("Cannot create %s, skipping font extraction.\n%s\n", attachmentsFolder, err)
+		log.Printf("Cannot create %s, skipping font extraction.\n%s\n", attachmentsDirectory, err)
 		// the video conversion will work without the custom fonts, so we don't need to fail on this.
 		return nil
 	}
 	// ffmpeg -dump_attachment:t "" -i input.mkv
 	currentDir, _ := os.Getwd() // let's assume we can know where we are.
-	os.Chdir(attachmentsFolder)
+	os.Chdir(attachmentsDirectory)
 	defer os.Chdir(currentDir)
 	exec.Command("ffmpeg", "-dump_attachment:t", "", "-i", videofile).Output()
-	// copy all fonts to the ~/.fonts folder
-	if err := copyFontsToLocalFontsDir(attachmentsFolder); err != nil {
+	// copy all fonts to the ~/.fonts directory
+	if err := copyFontsToLocalFontsDir(attachmentsDirectory); err != nil {
 		return err
 	}
 	refreshFonts()

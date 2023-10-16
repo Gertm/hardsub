@@ -66,23 +66,23 @@ func main() {
 		return
 	}
 	if config.WatchForFiles {
-		watchForFiles(config.arguments.SourceFolder, func() error {
-			PrepareFolderForConversion(&config)
+		watchForFiles(config.arguments.SourceDirectory, func() error {
+			PrepareDirectoryForConversion(&config)
 			return ConvertAllTheThings(config)
 		})
 	} else {
 
 		if config.Detox {
-			Log("Detoxing folder...")
+			Log("Detoxing directory...")
 			detoxWords := strings.Split(config.RemoveWords, ",")
-			if err := DetoxMkvsInFolder(config.arguments.SourceFolder, detoxWords...); err != nil {
-				LogErrorln("Cannot detox folder?!", err)
+			if err := DetoxMkvsInDirectory(config.arguments.SourceDirectory, detoxWords...); err != nil {
+				LogErrorln("Cannot detox directory?!", err)
 			}
 			Log("done.")
 		}
-		files, err := os.ReadDir(config.arguments.SourceFolder)
+		files, err := os.ReadDir(config.arguments.SourceDirectory)
 		if err != nil {
-			LogErrorln("Could not read files from", config.arguments.SourceFolder)
+			LogErrorln("Could not read files from", config.arguments.SourceDirectory)
 			os.Exit(1)
 		}
 		config.filesToConvert = files
@@ -126,9 +126,9 @@ func convert_file(videofile string, config Config) (string, error) {
 	noext := strings.Replace(videofile, path.Ext(videofile), "", 1)
 	var outputFile string
 	if config.Mkv {
-		outputFile = path.Join(config.TargetFolder, "HS_"+path.Base(videofile))
+		outputFile = path.Join(config.TargetDirectory, "HS_"+path.Base(videofile))
 	} else {
-		outputFile = path.Join(config.TargetFolder, strings.Replace(path.Base(videofile), ".mkv", ".mp4", 1))
+		outputFile = path.Join(config.TargetDirectory, strings.Replace(path.Base(videofile), ".mkv", ".mp4", 1))
 	}
 	baseVideoFile := path.Base(videofile)
 	var subsfile string
@@ -191,7 +191,7 @@ func convert_file(videofile string, config Config) (string, error) {
 			subfix.FixSubs(subsfile, 22, true, config.Verbose)
 		}
 		if config.ExtractFonts {
-			if err := extractFonts(config.TargetFolder, videofile); err != nil {
+			if err := extractFonts(config.TargetDirectory, videofile); err != nil {
 				return "", fmt.Errorf("error extracting subs: %w", err)
 			}
 		} // TODO: Make this entire section template based.
@@ -239,9 +239,9 @@ func convert_file(videofile string, config Config) (string, error) {
 		}
 	}
 
-	if config.OriginalsFolder != config.TargetFolder {
-		if err := createDirectoryIfNeeded(config.OriginalsFolder); err == nil {
-			movedFile := path.Join(config.OriginalsFolder, baseVideoFile)
+	if config.OriginalsDirectory != config.TargetDirectory {
+		if err := createDirectoryIfNeeded(config.OriginalsDirectory); err == nil {
+			movedFile := path.Join(config.OriginalsDirectory, baseVideoFile)
 			os.Rename(videofile, movedFile)
 		}
 	}
