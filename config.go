@@ -24,6 +24,11 @@ import (
 	"github.com/sanity-io/litter"
 )
 
+type IntroFrame struct {
+	Begin string
+	End   string
+}
+
 type Arguments struct {
 	SourceDirectory string `koanf:"sourcedir"`
 	CutStart        string `koanf:"cutstart"`
@@ -49,20 +54,21 @@ type Config struct {
 	Extension          string `koanf:"extension" toml:"extension" comment:"Look for files of this extension to convert. (You really want to set this to mkv)"`
 	RemoveWords        string `koanf:"removewords" toml:"removewords" comment:"When detoxing, remove the words in the comma separated value you specify."`
 	filesToConvert     []fs.DirEntry
-	Crf                int       `koanf:"crf" toml:"crf" comment:"Constant Rate Factor setting for ffmpeg."`
-	ExtractFonts       bool      `koanf:"extractfonts" toml:"extractfonts" comment:"Extract the fonts from the mkv to use them in the hardcoding."`
-	FirstOnly          bool      `koanf:"firstonly" toml:"firstonly" comment:"Only convert the first file. (For testing purposes)"`
-	Mkv                bool      `koanf:"mkv" toml:"mkv" comment:"Make MKV files instead of MP4 files."`
-	H265               bool      `koanf:"h265" toml:"h265" comment:"Use H265 encoding. Check if your CPU can do H265 encoding first, or this will be very slow."`
-	KeepSubs           bool      `koanf:"keepsubs" toml:"keepsubs" comment:"Keep subs in the directory after conversion instead of deleting them."`
-	CleanupSubs        bool      `koanf:"cleanupsubs" toml:"cleanupsubs" comment:"Clean up the subtitles (in the case of srt) to make them render better. Sometimes they render too big, use this in that case."`
-	Verbose            bool      `koanf:"verbose" toml:"verbose" comment:"Give more output about what's going on."`
-	ForOldDevices      bool      `koanf:"forolddevices" toml:"forolddevices" comment:"Use ffmpeg flags to get widest compatibility. (yuv stuff)"`
-	FastVersion        bool      `koanf:"fastversion" toml:"fastversion" comment:"Do a second and third pass, making a video at 1.5x the speed."`
-	KeepSlowVersion    bool      `koanf:"keepslowversion" toml:"keepslowversion" comment:"When making a fast version, don't delete the slow one."`
-	Detox              bool      `koanf:"detox" toml:"detox" comment:"Remove all 'weird' characters from the filename. (you want this)"`
-	WatchForFiles      bool      `koanf:"watchforfiles" toml:"watchforfiles" comment:"Watch for files in the directory and convert them as they appear."`
-	arguments          Arguments `koanf:"arguments"`
+	Crf                int                   `koanf:"crf" toml:"crf" comment:"Constant Rate Factor setting for ffmpeg."`
+	ExtractFonts       bool                  `koanf:"extractfonts" toml:"extractfonts" comment:"Extract the fonts from the mkv to use them in the hardcoding."`
+	FirstOnly          bool                  `koanf:"firstonly" toml:"firstonly" comment:"Only convert the first file. (For testing purposes)"`
+	Mkv                bool                  `koanf:"mkv" toml:"mkv" comment:"Make MKV files instead of MP4 files."`
+	H265               bool                  `koanf:"h265" toml:"h265" comment:"Use H265 encoding. Check if your CPU can do H265 encoding first, or this will be very slow."`
+	KeepSubs           bool                  `koanf:"keepsubs" toml:"keepsubs" comment:"Keep subs in the directory after conversion instead of deleting them."`
+	CleanupSubs        bool                  `koanf:"cleanupsubs" toml:"cleanupsubs" comment:"Clean up the subtitles (in the case of srt) to make them render better. Sometimes they render too big, use this in that case."`
+	Verbose            bool                  `koanf:"verbose" toml:"verbose" comment:"Give more output about what's going on."`
+	ForOldDevices      bool                  `koanf:"forolddevices" toml:"forolddevices" comment:"Use ffmpeg flags to get widest compatibility. (yuv stuff)"`
+	FastVersion        bool                  `koanf:"fastversion" toml:"fastversion" comment:"Do a second and third pass, making a video at 1.5x the speed."`
+	KeepSlowVersion    bool                  `koanf:"keepslowversion" toml:"keepslowversion" comment:"When making a fast version, don't delete the slow one."`
+	Detox              bool                  `koanf:"detox" toml:"detox" comment:"Remove all 'weird' characters from the filename. (you want this)"`
+	WatchForFiles      bool                  `koanf:"watchforfiles" toml:"watchforfiles" comment:"Watch for files in the directory and convert them as they appear."`
+	IntroFrames        map[string]IntroFrame `koanf:"introframes" toml:"introframes" comment:"The locations of the intro beginning and ending frames for specific series."`
+	arguments          Arguments             `koanf:"arguments"`
 }
 
 func DefaultConfig() Config {
@@ -99,14 +105,14 @@ func PrepareDirectoryForConversion(config *Config) {
 		fmt.Print("Detoxing directory...")
 		detoxWords := strings.Split(config.RemoveWords, ",")
 		if err := DetoxMkvsInDirectory(config.arguments.SourceDirectory, detoxWords...); err != nil {
-			LogError("detoxing directory failed:", config.arguments.SourceDirectory, err)
+			LogError("detoxing directory failed: %s %v", config.arguments.SourceDirectory, err)
 			os.Exit(1)
 		}
 		fmt.Print("done.\n")
 	}
 	files, err := os.ReadDir(config.arguments.SourceDirectory)
 	if err != nil {
-		LogError("cannot read directory:", config.arguments.SourceDirectory, err)
+		LogError("cannot read directory: %s %v", config.arguments.SourceDirectory, err)
 	}
 	config.filesToConvert = files
 	if config.Verbose {
