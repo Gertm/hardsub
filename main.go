@@ -41,11 +41,6 @@ func main() {
 		}
 	}
 
-	if config.arguments.ShowTui {
-		startTui()
-		return
-	}
-
 	if config.arguments.File != "" {
 		if config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
 			_, err := CutFragmentFromVideo(config)
