@@ -42,7 +42,7 @@ func main() {
 	}
 
 	if config.arguments.File != "" {
-		if config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
+		if config.arguments.OnlyCut && config.arguments.CutOut != "" {
 			_, err := CutFragmentFromVideo(config)
 			if err != nil {
 				LogError("could not cut fragment from output: %s\n", err)
@@ -97,6 +97,10 @@ func ConvertAllTheThings(config Config) error {
 			_, err := convert_file(fullpath, config)
 			if err != nil {
 				return err
+			}
+			if config.arguments.CutOut != "" {
+				config.arguments.File = file.Name() // this is eww.
+				CutFragmentFromVideo(config)
 			}
 			if config.FirstOnly {
 				Log("Done!")
@@ -218,7 +222,7 @@ func convert_file(videofile string, config Config) (string, error) {
 		}
 	}
 
-	if !config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
+	if !config.arguments.OnlyCut && config.arguments.CutOut != "" {
 		cutFile, err := CutFragmentFromVideo(config)
 		if err != nil {
 			fmt.Printf("could not cut fragment from output: %s\n", err)

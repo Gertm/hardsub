@@ -31,8 +31,7 @@ type IntroFrame struct {
 
 type Arguments struct {
 	SourceDirectory string `koanf:"sourcedir"`
-	CutStart        string `koanf:"cutstart"`
-	CutEnd          string `koanf:"cutend"`
+	CutOut          string `koanf:"cut-out"`
 	OnlyCut         bool   `koanf:"onlycut"`
 	DumpFramesAt    string `koanf:"dumpframesat"`
 	File            string `koanf:"file"`
@@ -72,6 +71,11 @@ type Config struct {
 }
 
 func DefaultConfig() Config {
+	intros := make(map[string]IntroFrame)
+	intros["example"] = IntroFrame{
+		Begin: "begin.png",
+		End:   "end.png",
+	}
 	return Config{
 		AudioLang:          "ja",
 		SubsLang:           "en",
@@ -97,6 +101,7 @@ func DefaultConfig() Config {
 		KeepSlowVersion:    false,
 		Detox:              true,
 		WatchForFiles:      false,
+		IntroFrames:        intros,
 	}
 }
 

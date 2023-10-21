@@ -241,16 +241,28 @@ func cutFromVideo(ts_start, ts_end time.Duration, config Config) (string, error)
 	return noIntroFile, nil
 }
 
-func CutFragmentFromVideo(config Config) (string, error) {
+func CutFragmentFromVideo(config Config, f ...string) (string, error) {
+	fileToCutFrom := config.arguments.File
 	fmt.Println("Looking for start of fragment...")
-	start, err := SearchForFrame(config.arguments.File, config.arguments.CutStart)
+	if len(f) > 0 {
+		fileToCutFrom = f[0]
+	}
+	parts := strings.FieldsFunc(config.arguments.CutOut, func(r rune) bool {
+		return r == '-'
+	})
+	if len(parts) != 2 {
+		return "", fmt.Errorf("cannot parse time specification of the fragment to cut out")
+	}
+	cutStart := parts[0]
+	cutEnd := parts[1]
+	start, err := SearchForFrame(fileToCutFrom, cutStart)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
 	}
 	fmt.Println("Found start frame at", start)
 	fmt.Println("Looking for end of fragment...")
-	stop, err := SearchForFrame(config.arguments.File, config.arguments.CutEnd)
+	stop, err := SearchForFrame(fileToCutFrom, cutEnd)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
