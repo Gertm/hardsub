@@ -74,7 +74,8 @@ func LoadConfig() {
 	}
 	f.String("file", "", "The specific file to operate on for cutting and frame dumping.")
 	f.Bool("onlycut", false, "Only cut, don't convert.")
-	f.String("cut-out", "", "Specify what part of the video you want cut out: e.g. --cut-out 00:04:30-00:06:10")
+	f.String("cutstart", "", "A jpg of the frame to look for in the video to determine the start of the fragment to cut out.")
+	f.String("cutend", "", "A jpg of the frame to look for in the video to determine the end of the fragment to cut out.")
 	f.String("dumpframesat", "", "A comma-separated list of timestamps you want to make jpg dumps for.")
 	f.Int("force-audio-track", -1, "Force the audio track to use. (for example: 4)")
 	f.Int("force-subs-track", -1, "Force the subs track to use. (for example: 3)")
@@ -91,11 +92,13 @@ func LoadConfig() {
 	config.arguments = Arguments{}
 	config.arguments.File = ka.String("file")
 	config.arguments.OnlyCut = ka.Bool("onlycut")
-	config.arguments.CutOut = ka.String("cut-out")
+	config.arguments.CutStart = ka.String("cutstart")
+	config.arguments.CutEnd = ka.String("cutend")
 	config.arguments.DumpFramesAt = ka.String("dumpframesat")
 	config.arguments.ForceAudioTrack = ka.Int("force-audio-track")
 	config.arguments.ForceSubsTrack = ka.Int("force-subs-track")
 	config.arguments.SourceDirectory = ka.String("sourcedir")
+	config.arguments.ShowTui = ka.Bool("showtui")
 	if config.arguments.SourceDirectory == "" {
 		config.arguments.SourceDirectory = wd
 	}
