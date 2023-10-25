@@ -98,6 +98,7 @@ func ConvertAllTheThings(config Config) error {
 			if err != nil {
 				return err
 			}
+
 			if config.FirstOnly {
 				Log("Done!")
 				return nil
@@ -201,6 +202,7 @@ func convert_file(videofile string, config Config) (string, error) {
 		if err := RunAndParseFfmpeg(convertCmd, vProps); err != nil {
 			return "", fmt.Errorf("error running the conversion for %s: %w", videofile, err)
 		}
+
 	}
 	if config.FastVersion {
 		fastOutputFile := strings.ReplaceAll(outputFile, path.Base(outputFile), "FAST_"+path.Base(outputFile))
@@ -218,12 +220,13 @@ func convert_file(videofile string, config Config) (string, error) {
 		}
 	}
 
-	if !config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
-		cutFile, err := CutFragmentFromVideo(config)
-		if err != nil {
-			fmt.Printf("could not cut fragment from output: %s\n", err)
-		} else {
-			outputFile = cutFile
+	intro, err := config.IntroFramesForFilename(outputFile)
+	if err != nil {
+		fmt.Println("no intro boundaries definition found for", outputFile)
+	} else {
+		nointroFile, err := cutFragmentFromVideo(outputFile, intro.Begin, intro.End)
+		if err == nil {
+			outputFile = nointroFile
 		}
 	}
 

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
@@ -79,7 +80,7 @@ func LoadConfig() {
 	f.String("dumpframesat", "", "A comma-separated list of timestamps you want to make jpg dumps for.")
 	f.Int("force-audio-track", -1, "Force the audio track to use. (for example: 4)")
 	f.Int("force-subs-track", -1, "Force the subs track to use. (for example: 3)")
-	f.Bool("showtui", false, "Show the TUI")
+	f.Bool("show-frames", false, "Show the intro frames config section.")
 	wd, _ := os.Getwd()
 	f.String("sourcedir", wd, "The directory in which to look for videos.")
 	f.Parse(os.Args[1:])
@@ -98,9 +99,12 @@ func LoadConfig() {
 	config.arguments.ForceAudioTrack = ka.Int("force-audio-track")
 	config.arguments.ForceSubsTrack = ka.Int("force-subs-track")
 	config.arguments.SourceDirectory = ka.String("sourcedir")
-	config.arguments.ShowTui = ka.Bool("showtui")
 	if config.arguments.SourceDirectory == "" {
 		config.arguments.SourceDirectory = wd
+	}
+	if ka.Bool("show-frames") {
+		fmt.Println(config.IntroFrames)
+		os.Exit(0)
 	}
 }
 
@@ -124,4 +128,13 @@ func SaveDefaultConfig() {
 		panic(err)
 	}
 	os.WriteFile(configFilename(), b, 0o666)
+}
+
+func (c *Config) IntroFramesForFilename(filename string) (IntroBoundaries, error) {
+	for k := range config.IntroFrames {
+		if strings.HasPrefix(strings.ToLower(filepath.Base(filename)), strings.ToLower(k)) {
+			return config.IntroFrames[k], nil
+		}
+	}
+	return IntroBoundaries{}, fmt.Errorf("can't find introboundaries for this file")
 }
