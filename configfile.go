@@ -136,5 +136,39 @@ func (c *Config) IntroFramesForFilename(filename string) (IntroBoundaries, error
 			return config.IntroFrames[k], nil
 		}
 	}
-	return IntroBoundaries{}, fmt.Errorf("can't find introboundaries for this file")
+	return IntroFramesForFilename(filename)
+}
+
+// go look for correctly named files in the configuration directory.
+func IntroFramesForFilename(filename string) (IntroBoundaries, error) {
+	configDir := filepath.Dir(configFilename())
+	files, err := os.ReadDir(configDir)
+	if err != nil {
+		return IntroBoundaries{}, fmt.Errorf("cannot read config directory: %s", configDir)
+	}
+	var ib IntroBoundaries
+	for _, f := range files {
+		if f.IsDir() || !strings.HasSuffix(f.Name(), ".png") {
+			continue
+		}
+		if strings.HasSuffix(f.Name(), "_begin.png") {
+			begin := strings.Index(f.Name(), "_begin.png")
+
+			if begin >= 0 && strings.Contains(filename, f.Name()[:begin]) {
+				ib.Begin = filepath.Join(configDir, f.Name())
+				fmt.Println("Found begin frame: ", ib.Begin)
+			}
+		}
+		if strings.HasSuffix(f.Name(), "_end.png") {
+			end := strings.Index(f.Name(), "_end.png")
+			if end >= 0 && strings.Contains(filename, f.Name()[:end]) {
+				ib.End = filepath.Join(configDir, f.Name())
+				fmt.Println("Found end frame: ", ib.End)
+			}
+		}
+	}
+	if ib.Begin != "" && ib.End != "" {
+		return ib, nil
+	}
+	return IntroBoundaries{}, fmt.Errorf("cannot find intro boundaries for %s", filename)
 }
