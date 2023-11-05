@@ -222,7 +222,7 @@ func convert_file(videofile string, config Config) (string, error) {
 
 	intro, err := config.IntroFramesForFilename(outputFile)
 	if err != nil {
-		fmt.Println("no intro boundaries definition found for", outputFile)
+		fmt.Println("no intro boundaries definition found for", outputFile, "  skipping...")
 	} else {
 		nointroFile, err := cutFragmentFromVideo(outputFile, intro.Begin, intro.End)
 		if err == nil {

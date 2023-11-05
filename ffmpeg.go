@@ -274,6 +274,8 @@ func cutFromVideo2(ts_start, ts_end time.Duration, filename string) (string, err
 		fmt.Println(err)
 		return "", err
 	}
+	os.RemoveAll(firstPart)
+	os.RemoveAll(lastPart)
 	return noIntroFile, nil
 }
 
@@ -282,6 +284,7 @@ func CutFragmentFromVideo(config Config) (string, error) {
 }
 
 func cutFragmentFromVideo(filename, beginframe, endframe string) (string, error) {
+	// TODO: Search for the frames in the frame folder, matching on the name?
 	fmt.Println("Looking for start of fragment...")
 	start, err := SearchForFrame(filename, beginframe)
 	if err != nil {
