@@ -70,6 +70,35 @@ type Config struct {
 	arguments          Arguments                  `koanf:"arguments"`
 }
 
+func (c Config) FfmpegParametersForCutting(inputFile, outputFile string) string {
+	sb := strings.Builder{}
+	sb.WriteString("-y -hide_banner -loglevel error -stats -i ")
+	sb.WriteString(inputFile)
+	sb.WriteString(" -c:a aac")
+	videoCodec := "libx264"
+	if config.H265 {
+		videoCodec = "libx265"
+	}
+	sb.WriteString(" -c:v " + videoCodec)
+	sb.WriteString(fmt.Sprintf(" -crf %d", config.Crf))
+	h26xTune := ""
+	if config.H26xTune == "none" {
+		h26xTune = ""
+	} else {
+		h26xTune = " -tune " + config.H26xTune + " "
+	}
+	sb.WriteString(h26xTune)
+	sb.WriteString(" -preset " + config.H26xPreset)
+
+	if config.ForOldDevices {
+		sb.WriteString(" -profile:v baseline -level 3.0 -pix_fmt yuv420p -ac 2 -b:a 128k -movflags faststart ")
+	}
+	sb.WriteString(outputFile)
+	// convertCmd := fmt.Sprintf("-y -hide_banner -loglevel error -stats -i %s -map 0:%d -map 0:%d -vf subtitles=%s -c:a %s -c:v %s -crf %d -preset %s %s%s%s",
+	// 	videofile, output.VideoTrack, output.AudioTrack, subsfile, audioCodec, videoCodec, config.Crf, config.H26xPreset, h26xTune, oldDevices, outputFile)
+	return sb.String()
+}
+
 func DefaultConfig() Config {
 	return Config{
 		AudioLang:          "ja",
