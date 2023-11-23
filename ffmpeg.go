@@ -103,11 +103,12 @@ func GetVideoParamsFromFFMpeg(filename string) VideoProperties {
 func RunAndParseFfmpeg(args string, prop VideoProperties) error {
 	bar := progressbar.NewOptions(
 		prop.NrOfVideoFrames,
+		progressbar.OptionUseANSICodes(true),
 		progressbar.OptionSetPredictTime(true),
 		progressbar.OptionSetDescription(prop.Filename),
 		progressbar.OptionShowElapsedTimeOnFinish(),
 		progressbar.OptionShowDescriptionAtLineEnd(),
-		progressbar.OptionFullWidth(),
+		progressbar.OptionSetRenderBlankState(false),
 	)
 	Log("ffmpeg", args)
 	cmd := exec.Command("ffmpeg", strings.Split(args, " ")...)
@@ -208,7 +209,8 @@ func formatDuration(d time.Duration) string {
 // returns the full name of the videoFile with the fragment cut out.
 func cutFromVideo2(ts_start, ts_end time.Duration, filename string) (string, error) {
 	baseFilename := path.Base(filename)
-	noIntroFile := strings.ReplaceAll(filename, baseFilename, "NOINTRO_"+baseFilename)
+	extension := path.Ext(filename)
+	noIntroFile := strings.ReplaceAll(filename, extension, "_NOINTRO"+extension)
 	firstPart := strings.ReplaceAll(filename, baseFilename, "first_"+baseFilename)
 	lastPart := strings.ReplaceAll(filename, baseFilename, "last_"+path.Base(filename))
 	videoProps := GetVideoPropertiesWithFFProbe(filename)
