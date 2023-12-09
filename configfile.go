@@ -81,6 +81,7 @@ func LoadConfig() {
 	f.Int("force-audio-track", -1, "Force the audio track to use. (for example: 4)")
 	f.Int("force-subs-track", -1, "Force the subs track to use. (for example: 3)")
 	f.Bool("show-frames", false, "Show the intro frames config section.")
+	f.Bool("watchforfiles", false, "Watch the directory for incoming files and convert them.")
 	wd, _ := os.Getwd()
 	f.String("sourcedir", wd, "The directory in which to look for videos.")
 	f.Parse(os.Args[1:])
@@ -99,6 +100,7 @@ func LoadConfig() {
 	config.arguments.ForceAudioTrack = ka.Int("force-audio-track")
 	config.arguments.ForceSubsTrack = ka.Int("force-subs-track")
 	config.arguments.SourceDirectory = ka.String("sourcedir")
+	config.arguments.WatchForFiles = ka.Bool("watchforfiles")
 	if config.arguments.SourceDirectory == "" {
 		config.arguments.SourceDirectory = wd
 	}

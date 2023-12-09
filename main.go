@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -25,6 +26,7 @@ import (
 )
 
 var LastSelectedTracks *SelectedTracks
+var FILEWATCH_ENCODING = false
 
 func main() {
 	InitConfig()
@@ -60,10 +62,17 @@ func main() {
 		}
 		return
 	}
-	if config.WatchForFiles {
+	if config.WatchForFiles || config.arguments.WatchForFiles {
 		watchForFiles(config.arguments.SourceDirectory, func() error {
 			PrepareDirectoryForConversion(&config)
-			return ConvertAllTheThings(config)
+			if !FILEWATCH_ENCODING {
+				FILEWATCH_ENCODING = true
+				defer func() {
+					FILEWATCH_ENCODING = false
+				}()
+				return ConvertAllTheThings(config)
+			}
+			return errors.New("Already converting, so not starting a second one.")
 		})
 	} else {
 
@@ -94,11 +103,11 @@ func ConvertAllTheThings(config Config) error {
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()
-			_, err := convert_file(fullpath, config)
+			convertedName, err := convert_file(fullpath, config)
 			if err != nil {
 				return err
 			}
-
+			sendNotification(convertedName, "Conversion done", &config)
 			if config.FirstOnly {
 				Log("Done!")
 				return nil

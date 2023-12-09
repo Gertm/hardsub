@@ -38,6 +38,7 @@ type Arguments struct {
 	File            string `koanf:"file"`
 	ForceAudioTrack int    `koanf:"forceaudiotrack"`
 	ForceSubsTrack  int    `koanf:"forcesubstrack"`
+	WatchForFiles   bool   `koanf:"watchforfiles"`
 }
 
 type Config struct {
@@ -67,6 +68,8 @@ type Config struct {
 	Detox              bool                       `koanf:"detox" toml:"detox" comment:"Remove all 'weird' characters from the filename. (you want this)"`
 	WatchForFiles      bool                       `koanf:"watchforfiles" toml:"watchforfiles" comment:"Watch for files in the directory and convert them as they appear."`
 	IntroFrames        map[string]IntroBoundaries `koanf:"introframes" toml:"introframes" comment:"The locations of the intro beginning and ending frames for specific series."`
+	PushoverToken      string                     `koanf:"pushovertoken" toml:"pushovertoken" comment:"The Pushover token."`
+	PushoverUserKey    string                     `koanf:"pushoveruserkey" toml:"pushoveruserkey" comment:"The Pushover User Key"`
 	arguments          Arguments                  `koanf:"arguments"`
 }
 
