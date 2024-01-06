@@ -37,11 +37,11 @@ func main() {
 	// Can we really start if these aren't available?
 	for _, exe := range []string{"ffmpeg", "ffprobe", "mkvmerge"} {
 		if _, err := FindInPath(exe); err != nil {
-			fmt.Printf("Need to have %s on $PATH to work.\n", exe)
+			log.Printf("Need to have %s on $PATH to work.\n", exe)
 			return
 		}
 		if config.Verbose {
-			fmt.Println("✅ Found", exe)
+			log.Println("✅ Found", exe)
 		}
 	}
 
@@ -55,10 +55,10 @@ func main() {
 		if config.arguments.DumpFramesAt != "" {
 			timestamps := strings.FieldsFunc(config.arguments.DumpFramesAt, func(c rune) bool { return c == ',' })
 			// ffmpeg -ss 00:01:00 -i input.mp4 -frames:v 1 output.png
-			fmt.Println(timestamps)
+			log.Println(timestamps)
 			for _, timestamp := range timestamps {
 				if name, err := DumpFrameFromVideoAt(config.arguments.File, timestamp); err != nil {
-					fmt.Fprintln(os.Stderr, name, err)
+					log.Println(name, err)
 				}
 			}
 		}
@@ -111,7 +111,7 @@ func main() {
 			os.Exit(1)
 		}
 	}
-	fmt.Println("Done!")
+	log.Println("Done!")
 }
 
 func ConvertAllTheThings(config Config) error {
@@ -223,7 +223,7 @@ func convert_file(videofile string, config Config) (string, error) {
 		convertCmd := fmt.Sprintf("-y -hide_banner -loglevel error -stats -i %s -map 0:%d -map 0:%d -vf subtitles=%s -c:a %s -c:v %s -crf %d -preset %s %s%s%s",
 			videofile, output.VideoTrack, output.AudioTrack, subsfile, audioCodec, videoCodec, config.Crf, config.H26xPreset, h26xTune, oldDevices, outputFile)
 		Log("Convert Command:", "ffmpeg", convertCmd)
-		fmt.Println("Starting re-encoding...")
+		log.Println("Starting re-encoding...")
 		if err := RunAndParseFfmpeg(convertCmd, vProps); err != nil {
 			return "", fmt.Errorf("error running the conversion for %s: %w\nusing command: %s", videofile, err, convertCmd)
 		}
@@ -231,11 +231,11 @@ func convert_file(videofile string, config Config) (string, error) {
 	}
 	if config.FastVersion {
 		fastOutputFile := strings.ReplaceAll(outputFile, path.Base(outputFile), "FAST_"+path.Base(outputFile))
-		fmt.Println(">>>>>>>>> Creating", fastOutputFile, ">>>>>>>>>>>")
+		log.Println(">>>>>>>>> Creating", fastOutputFile, ">>>>>>>>>>>")
 		if err := FastFile(outputFile, fastOutputFile); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			if !config.KeepSlowVersion {
-				fmt.Println("Keeping normal speed version because creating the fast version failed.")
+				log.Println("Keeping normal speed version because creating the fast version failed.")
 			}
 		} else {
 			if !config.KeepSlowVersion {
@@ -247,18 +247,20 @@ func convert_file(videofile string, config Config) (string, error) {
 
 	intro, err := config.IntroFramesForFilename(outputFile)
 	if err != nil {
-		fmt.Println("no intro boundaries definition found for", outputFile, "  skipping...")
+		log.Println("no intro boundaries definition found for", outputFile, "  skipping...")
 	} else {
 		nointroFile, err := cutFragmentFromVideo(outputFile, intro.Begin, intro.End)
 		if err == nil {
 			outputFile = nointroFile
+		} else {
+			Log("Error while intro cutting:", err)
 		}
 	}
 
 	if config.PostCmd != "" {
 		postcommand := strings.ReplaceAll(config.PostCmd, "%%o", outputFile)
 		if err := RunBashCommand(postcommand); err != nil {
-			fmt.Println("Post command failed, check your script?\n", err)
+			log.Println("Post command failed, check your script?\n", err)
 		}
 	}
 
