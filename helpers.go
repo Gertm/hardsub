@@ -144,7 +144,7 @@ func copyFontsToLocalFontsDir(sourcedir string) error {
 	for _, file := range files {
 		if strings.Index(strings.ToLower(file.Name()), ".ttf") > 0 ||
 			strings.Index(strings.ToLower(file.Name()), ".otf") > 0 {
-			logV("Copying %s to %s", file.Name(), dotFonts)
+			logV("Copying %s to %s\n", file.Name(), dotFonts)
 			copyFile(path.Join(sourcedir, file.Name()), path.Join(dotFonts, file.Name()))
 		}
 	}
