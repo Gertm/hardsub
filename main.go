@@ -65,8 +65,10 @@ func main() {
 		return
 	}
 	if config.WatchForFiles || config.arguments.WatchForFiles {
-		ctx := context.Background() // don't really need cancellation here.
-		incoming := make(chan string, 500)
+		// TODO: queue the files in the current folder immediately
+		Log("Watching", config.arguments.SourceDirectory, "for incoming files.")
+		ctx := context.Background()        // don't really need cancellation here.
+		incoming := make(chan string, 500) // large buffer in case we copy a whole bunch of files at once.
 		watchandqueue.Verbose = config.Verbose
 		go func() {
 			err := watchandqueue.WatchForIncomingFiles(ctx, config.arguments.SourceDirectory, ".mkv", incoming)
@@ -77,6 +79,7 @@ func main() {
 		for {
 			f := <-incoming
 			if !FileExists(f) { // we're creating files in the same folder, which get moved later. (TODO: improve?)
+				Log("File not there, skipping.")
 				continue
 			}
 			detoxed := DetoxFilename(f, strings.Split(config.RemoveWords, ",")...)
@@ -89,7 +92,6 @@ func main() {
 			}
 		}
 	} else {
-
 		if config.Detox {
 			Log("Detoxing directory...")
 			detoxWords := strings.Split(config.RemoveWords, ",")
