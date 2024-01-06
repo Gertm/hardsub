@@ -66,7 +66,7 @@ func main() {
 	}
 	if config.WatchForFiles || config.arguments.WatchForFiles {
 		ctx := context.Background() // don't really need cancellation here.
-		incoming := make(chan string, 5)
+		incoming := make(chan string, 500)
 		watchandqueue.Verbose = config.Verbose
 		go func() {
 			err := watchandqueue.WatchForIncomingFiles(ctx, config.arguments.SourceDirectory, ".mkv", incoming)
@@ -76,6 +76,9 @@ func main() {
 		}()
 		for {
 			f := <-incoming
+			if !FileExists(f) { // we're creating files in the same folder, which get moved later. (TODO: improve?)
+				continue
+			}
 			detoxed := DetoxFilename(f, strings.Split(config.RemoveWords, ",")...)
 			os.Rename(f, detoxed)
 			converted, err := convert_file(detoxed, config)
