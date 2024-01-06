@@ -16,13 +16,15 @@ limitations under the License.
 package main
 
 import (
-	"errors"
+	"context"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"strings"
 
 	"github.com/gertm/hardsub/subfix"
+	"github.com/gertm/watchandqueue"
 )
 
 var LastSelectedTracks *SelectedTracks
@@ -63,17 +65,24 @@ func main() {
 		return
 	}
 	if config.WatchForFiles || config.arguments.WatchForFiles {
-		watchForFiles(config.arguments.SourceDirectory, func() error {
-			PrepareDirectoryForConversion(&config)
-			if !FILEWATCH_ENCODING {
-				FILEWATCH_ENCODING = true
-				defer func() {
-					FILEWATCH_ENCODING = false
-				}()
-				return ConvertAllTheThings(config)
+		ctx := context.Background() // don't really need cancellation here.
+		incoming := make(chan string, 5)
+		go func() {
+			err := watchandqueue.WatchForIncomingFiles(ctx, config.arguments.SourceDirectory, ".mkv", incoming)
+			if err != nil {
+				log.Fatal("Cannot start watching for incoming files:", err)
 			}
-			return errors.New("Already converting, so not starting a second one.")
-		})
+		}()
+		for {
+			f := <-incoming
+			detoxed := DetoxFilename(f)
+			converted, err := convert_file(detoxed, config)
+			if err != nil {
+				log.Printf("Error converting file: %s: %s\n", detoxed, err)
+			} else {
+				sendNotification(converted, "conversion done", &config)
+			}
+		}
 	} else {
 
 		if config.Detox {
@@ -209,7 +218,7 @@ func convert_file(videofile string, config Config) (string, error) {
 		Log("Convert Command:", "ffmpeg", convertCmd)
 		fmt.Println("Starting re-encoding...")
 		if err := RunAndParseFfmpeg(convertCmd, vProps); err != nil {
-			return "", fmt.Errorf("error running the conversion for %s: %w", videofile, err)
+			return "", fmt.Errorf("error running the conversion for %s: %w\nusing command: %s", videofile, err, convertCmd)
 		}
 
 	}

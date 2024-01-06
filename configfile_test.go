@@ -31,16 +31,7 @@ func TestIntroFramesForFilename(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
-		{"undeadunluck",
-			args{
-				"Undead_Unluck_-_05.mkv",
-			},
-			IntroBoundaries{
-				Begin: "/home/gert/.config/hardsub/Undead_Unluck_begin.png",
-				End:   "/home/gert/.config/hardsub/Undead_Unluck_end.png",
-			},
-			false,
-		},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

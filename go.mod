@@ -1,10 +1,10 @@
 module github.com/gertm/hardsub
 
-go 1.20
+go 1.21.3
 
 require (
 	github.com/buger/jsonparser v1.1.1
-	github.com/fsnotify/fsnotify v1.6.0
+	github.com/fsnotify/fsnotify v1.7.0
 	github.com/google/go-cmp v0.5.9
 	github.com/knadh/koanf/parsers/toml v0.1.0
 	github.com/knadh/koanf/providers/file v0.1.0
@@ -18,6 +18,7 @@ require (
 
 require (
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/gertm/watchandqueue v0.0.0-20240106073152-2ec3a918d2ae // indirect
 	github.com/gregdel/pushover v1.3.0 // indirect
 	github.com/knadh/koanf/maps v0.1.1 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
