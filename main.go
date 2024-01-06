@@ -75,9 +75,8 @@ func main() {
 		}()
 		for {
 			f := <-incoming
-			Log("New file:", f)
 			detoxed := DetoxFilename(f)
-			Log("Detoxed:", detoxed)
+			os.Rename(f, detoxed)
 			converted, err := convert_file(detoxed, config)
 			if err != nil {
 				log.Printf("Error converting file: %s: %s\n", detoxed, err)
