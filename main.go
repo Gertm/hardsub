@@ -258,6 +258,7 @@ func convert_file(videofile string, config Config) (string, error) {
 	}
 
 	if config.PostCmd != "" {
+		Log("Running postcmd...")
 		postcommand := strings.ReplaceAll(config.PostCmd, "%%o", outputFile)
 		if err := RunBashCommand(postcommand); err != nil {
 			log.Println("Post command failed, check your script?\n", err)
@@ -270,5 +271,6 @@ func convert_file(videofile string, config Config) (string, error) {
 			os.Rename(videofile, movedFile)
 		}
 	}
+	Log("Done conversion of ", videofile, "->", outputFile)
 	return outputFile, nil
 }
