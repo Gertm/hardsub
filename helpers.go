@@ -134,7 +134,7 @@ func createDirectoryIfNeeded(dirName string) error {
 func copyFontsToLocalFontsDir(sourcedir string) error {
 	files, err := os.ReadDir(sourcedir)
 	if err != nil {
-		LogErrorln("Cannot read the directory we just created?!", err)
+		LogErrorln("Cannot read the directory we just created?!", err, files)
 	}
 	userHome, err := os.UserHomeDir()
 	if err != nil {
@@ -144,7 +144,7 @@ func copyFontsToLocalFontsDir(sourcedir string) error {
 	for _, file := range files {
 		if strings.Index(strings.ToLower(file.Name()), ".ttf") > 0 ||
 			strings.Index(strings.ToLower(file.Name()), ".otf") > 0 {
-			logV("Copying %s to %s\n", file.Name(), dotFonts)
+			logV("Fonts: Copying %s to %s\n", file.Name(), dotFonts)
 			copyFile(path.Join(sourcedir, file.Name()), path.Join(dotFonts, file.Name()))
 		}
 	}
@@ -179,9 +179,6 @@ func refreshFonts() {
 
 func extractFonts(workingdir, videofile string) error {
 	attachmentsDirectory := path.Join(workingdir, "attachments")
-	if err := createDirectoryIfNeeded(attachmentsDirectory); err != nil {
-		return err
-	}
 	err := os.MkdirAll(attachmentsDirectory, os.ModePerm)
 	if err != nil {
 		log.Printf("Cannot create %s, skipping font extraction.\n%s\n", attachmentsDirectory, err)
