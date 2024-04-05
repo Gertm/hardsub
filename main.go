@@ -83,12 +83,17 @@ func main() {
 				continue
 			}
 			detoxed := DetoxFilename(f, strings.Split(config.RemoveWords, ",")...)
-			os.Rename(f, detoxed)
+			if err := os.Rename(f, detoxed); err != nil {
+				log.Println("error renaming detoxed file:", err)
+			}
+
 			converted, err := convert_file(detoxed, config)
 			if err != nil {
 				log.Printf("Error converting file: %s: %s\n", detoxed, err)
 			} else {
-				sendNotification(converted, "conversion done", &config)
+				if err := sendNotification(converted, "conversion done", &config); err != nil {
+					log.Println("sending notification failed:", err)
+				}
 			}
 		}
 	} else {
@@ -123,7 +128,9 @@ func ConvertAllTheThings(config Config) error {
 			if err != nil {
 				return err
 			}
-			sendNotification(convertedName, "Conversion done", &config)
+			if err := sendNotification(convertedName, "Conversion done", &config); err != nil {
+				log.Println("error sending notification:", err)
+			}
 			if config.FirstOnly {
 				Log("Done!")
 				return nil
@@ -268,7 +275,10 @@ func convert_file(videofile string, config Config) (string, error) {
 	if config.OriginalsDirectory != config.TargetDirectory {
 		if err := createDirectoryIfNeeded(config.OriginalsDirectory); err == nil {
 			movedFile := path.Join(config.OriginalsDirectory, baseVideoFile)
-			os.Rename(videofile, movedFile)
+			rerr := os.Rename(videofile, movedFile)
+			if rerr != nil {
+				log.Println("error renaming videofile:", err)
+			}
 		}
 	}
 	Log("Done conversion of ", videofile, "->", outputFile)

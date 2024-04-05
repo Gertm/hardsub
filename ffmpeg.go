@@ -18,6 +18,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path"
@@ -71,7 +72,10 @@ func GetVideoParamsFromFFMpeg(filename string) VideoProperties {
 	fmt.Println("Getting video properties of", filename)
 	cmd := exec.Command("ffmpeg", "-i", filename)
 	stderr, _ := cmd.StderrPipe()
-	cmd.Start()
+	err := cmd.Start()
+	if err != nil {
+		log.Println("error while getting video parameters: ", err)
+	}
 	scanner := bufio.NewScanner(stderr)
 	scanner.Split(bufio.ScanLines)
 	var SawVideoStream bool
@@ -142,7 +146,7 @@ func RunAndParseFfmpeg(args string, prop VideoProperties) error {
 				// and the label 'frame='
 				curFrame, err := strconv.Atoi(m[6:])
 				if err == nil {
-					bar.Set(curFrame)
+					_ = bar.Set(curFrame)
 					continue
 				}
 			} else {
