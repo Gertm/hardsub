@@ -90,6 +90,9 @@ func main() {
 			converted, err := convert_file(detoxed, config)
 			if err != nil {
 				log.Printf("Error converting file: %s: %s\n", detoxed, err)
+				if err := sendNotification(fmt.Sprintf("%s failed to convert: %s", detoxed, err.Error()), "Error converting", &config); err != nil {
+					log.Println("sending notification failed:", err)
+				}
 			} else {
 				if err := sendNotification(converted, "conversion done", &config); err != nil {
 					log.Println("sending notification failed:", err)
