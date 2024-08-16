@@ -128,7 +128,7 @@ func RunAndParseFfmpeg(args string, prop VideoProperties) error {
 		if nextIsFrame {
 			nextIsFrame = false
 			curFrame, err := strconv.Atoi(m)
-			if err == nil {
+			if err == nil && (!config.WatchForFiles || !config.arguments.WatchForFiles) {
 				bar.Set(curFrame)
 				// if we're not showing a progress bar yet, show progression of frames encoded.
 				if curFrame < bar.GetMax()/100 {
