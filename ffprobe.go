@@ -1,11 +1,24 @@
 package main
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+)
 
-var ffprobe_cmdline string = "ffprobe -v quiet -print_format json -show_format -show_streams -show_format"
+var ffprobe_cmdline string = "ffprobe -v quiet -print_format json -show_format -show_streams "
 
-func GetFFprobeInfo(filename string) FfprobeOutput {
-
+func GetFFprobeInfo(filename string) (*FfprobeOutput, error) {
+	output, err := OutputBytesForCommand(ffprobe_cmdline + filename)
+	if err != nil {
+		return nil, err
+	}
+	var result FfprobeOutput
+	err = json.Unmarshal(output, &result)
+	if err != nil {
+		return nil, fmt.Errorf("could not unmarshal ffprobe output: %w", err)
+	}
+	return &result, nil
 }
 
 type FfprobeOutput struct {
@@ -68,19 +81,8 @@ type Stream struct {
 		Dependent       int `json:"dependent"`
 		StillImage      int `json:"still_image"`
 	} `json:"disposition"`
-	Tags Tags `json:"tags"`
+	Tags map[string]string `json:"tags"`
 }
-
-type Tags struct {
-	BPSEng                      string `json:"BPS-eng"`
-	DURATIONEng                 string `json:"DURATION-eng"`
-	NUMBEROFFRAMESEng           string `json:"NUMBER_OF_FRAMES-eng"`
-	NUMBEROFBYTESEng            string `json:"NUMBER_OF_BYTES-eng"`
-	STATISTICSWRITINGAPPEng     string `json:"_STATISTICS_WRITING_APP-eng"`
-	STATISTICSWRITINGDATEUTCEng string `json:"_STATISTICS_WRITING_DATE_UTC-eng"`
-	STATISTICSTAGSEng           string `json:"_STATISTICS_TAGS-eng"`
-}
-
 type Format struct {
 	Filename       string `json:"filename"`
 	NbStreams      int    `json:"nb_streams"`

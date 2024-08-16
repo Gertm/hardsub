@@ -48,16 +48,21 @@ func SplitCommand(cmd string) ([]string, error) {
 	return fields, nil
 }
 
-func OutputForCommand(cmd string) (string, error) {
+func OutputBytesForCommand(cmd string) ([]byte, error) {
 	parts, err := SplitCommand(cmd)
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
 	raw, err := exec.Command(parts[0], parts[1:]...).Output()
 	if err != nil {
-		return "", err
+		return []byte{}, err
 	}
-	return string(raw), nil
+	return raw, nil
+}
+
+func OutputForCommand(cmd string) (string, error) {
+	bytes, err := OutputBytesForCommand(cmd)
+	return string(bytes), err
 }
 
 func OutputForCommandLst(cmd []string) (string, error) {
