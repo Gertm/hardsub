@@ -1,0 +1,15 @@
+[Unit]
+Description=Hardsub directory watch service
+Wants=default.target
+StartLimitIntervalSec=0
+
+[Service]
+ExecStart=/home/gert/src/hardsub/hardsub --watchforfiles
+Restart=always
+RestartSec=3
+Environment=DISPLAY=:0
+WorkingDirectory=/home/gert/incoming/
+
+[Install]
+WantedBy=default.target
+

@@ -30,28 +30,30 @@ import (
 	"github.com/sanity-io/litter"
 )
 
-func logV(format string, v ...interface{}) {
-	if VERBOSE {
-		log.Printf(format, v...)
+func logV(format string, v ...any) {
+	if config.Verbose {
+		fmt.Printf(format, v...)
 	}
 }
 
-func Log(msg ...interface{}) {
-	if VERBOSE {
-		log.Println(msg...)
+func Log(msg ...any) {
+	if config.Verbose {
+		fmt.Println(msg...)
 	}
 }
 
-func LogF(str string, args ...interface{}) {
-	if VERBOSE {
-		log.Printf(str, args...)
-	}
+func LogError(format string, v ...any) {
+	fmt.Fprintf(os.Stderr, format, v...)
+}
+
+func LogErrorln(msgs ...any) {
+	fmt.Fprintln(os.Stderr, msgs...)
 }
 
 func DetoxFilename(filename string, remove ...string) string {
 	baseName := path.Base(filename)
 	for _, r := range remove {
-		baseName = strings.Replace(baseName, r, "", -1)
+		baseName = strings.ReplaceAll(baseName, r, "")
 	}
 	var sb strings.Builder
 	justWroteUnderscore := true // don't write underscores at the start
@@ -70,17 +72,19 @@ func DetoxFilename(filename string, remove ...string) string {
 			sb.WriteRune(ch)
 			justWroteUnderscore = false
 		}
+
 	}
 	return path.Join(path.Dir(filename), sb.String())
 }
 
-func DetoxMkvsInFolder(foldername string, remove ...string) error {
-	toxic, err := os.ReadDir(foldername)
+func DetoxMkvsInDirectory(dirname string, remove ...string) error {
+	toxic, err := os.ReadDir(dirname)
 	if err != nil {
-		log.Fatal(err)
+		LogErrorln("cannot read the filenames in directory", dirname, err)
+		os.Exit(1)
 	}
 	for _, f := range toxic {
-		fullname := path.Join(foldername, f.Name())
+		fullname := path.Join(dirname, f.Name())
 		if strings.ToLower(path.Ext(fullname)) == ".mkv" {
 			dt := DetoxFilename(fullname, remove...)
 			if f.Name() != dt {
@@ -130,17 +134,17 @@ func createDirectoryIfNeeded(dirName string) error {
 func copyFontsToLocalFontsDir(sourcedir string) error {
 	files, err := os.ReadDir(sourcedir)
 	if err != nil {
-		log.Fatal("Cannot read the folder we just created?!", err)
+		LogErrorln("Cannot read the directory we just created?!", err, files)
 	}
 	userHome, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal("Cannot get our home directory!", err)
+		LogErrorln("Cannot get our home directory!", err)
 	}
 	dotFonts := path.Join(userHome, ".fonts")
 	for _, file := range files {
 		if strings.Index(strings.ToLower(file.Name()), ".ttf") > 0 ||
 			strings.Index(strings.ToLower(file.Name()), ".otf") > 0 {
-			logV("Copying %s to %s", file.Name(), dotFonts)
+			logV("Fonts: Copying %s to %s\n", file.Name(), dotFonts)
 			copyFile(path.Join(sourcedir, file.Name()), path.Join(dotFonts, file.Name()))
 		}
 	}
@@ -150,12 +154,13 @@ func copyFontsToLocalFontsDir(sourcedir string) error {
 func copyFile(src, dst string) {
 	fin, err := os.Open(src)
 	if err != nil {
-		log.Fatal(err)
+		LogErrorln("cannot open source file for copying", src, err)
 	}
 	defer fin.Close()
 
 	fout, err := os.Create(dst)
 	if err != nil {
+		LogErrorln("cannot create target file for copy:", dst, err)
 		log.Fatal(err)
 	}
 	defer fout.Close()
@@ -163,6 +168,7 @@ func copyFile(src, dst string) {
 	_, err = io.Copy(fout, fin)
 
 	if err != nil {
+		LogError("cannot copy %s to %s", src, dst)
 		log.Fatal(err)
 	}
 }
@@ -172,23 +178,20 @@ func refreshFonts() {
 }
 
 func extractFonts(workingdir, videofile string) error {
-	attachmentsFolder := path.Join(workingdir, "attachments")
-	if err := createDirectoryIfNeeded(attachmentsFolder); err != nil {
-		return err
-	}
-	err := os.MkdirAll(attachmentsFolder, os.ModePerm)
+	attachmentsDirectory := path.Join(workingdir, "attachments")
+	err := os.MkdirAll(attachmentsDirectory, os.ModePerm)
 	if err != nil {
-		log.Printf("Cannot create %s, skipping font extraction.\n%s\n", attachmentsFolder, err)
+		log.Printf("Cannot create %s, skipping font extraction.\n%s\n", attachmentsDirectory, err)
 		// the video conversion will work without the custom fonts, so we don't need to fail on this.
 		return nil
 	}
 	// ffmpeg -dump_attachment:t "" -i input.mkv
 	currentDir, _ := os.Getwd() // let's assume we can know where we are.
-	os.Chdir(attachmentsFolder)
+	os.Chdir(attachmentsDirectory)
 	defer os.Chdir(currentDir)
 	exec.Command("ffmpeg", "-dump_attachment:t", "", "-i", videofile).Output()
-	// copy all fonts to the ~/.fonts folder
-	if err := copyFontsToLocalFontsDir(attachmentsFolder); err != nil {
+	// copy all fonts to the ~/.fonts directory
+	if err := copyFontsToLocalFontsDir(attachmentsDirectory); err != nil {
 		return err
 	}
 	refreshFonts()
@@ -252,17 +255,17 @@ func SelectTracksWithMkvMerge(path string, config Config) (*SelectedTracks, erro
 				}
 				switch codec_id {
 				case "S_TEXT/ASS", "S_TEXT/SSA", "SAA/ASS":
-					if VERBOSE {
+					if config.Verbose {
 						fmt.Printf("%s has SSA subs\n", path)
 					}
 					output.SubtitleType = SSA_ASS
 				case "S_TEXT/UTF8":
-					if VERBOSE {
+					if config.Verbose {
 						fmt.Printf("%s has SRT subtitles\n", path)
 					}
 					output.SubtitleType = SRT
 				case "S_HDMV/PGS", "S_IMAGE/BMP", "S_DVDSUB", "S_VOBSUB":
-					if VERBOSE {
+					if config.Verbose {
 						fmt.Printf("%s has picture based subtitles\n", path)
 					}
 					output.SubtitleType = PICTURE
@@ -276,13 +279,13 @@ func SelectTracksWithMkvMerge(path string, config Config) (*SelectedTracks, erro
 	if output.SubsTrack == -1 && len(subsTracks) == 1 {
 		output.SubsTrack = subsTracks[0]
 	}
-	if config.ForceAudioTrack != -1 {
-		output.AudioTrack = config.ForceAudioTrack
+	if config.arguments.ForceAudioTrack != -1 {
+		output.AudioTrack = config.arguments.ForceAudioTrack
 	}
-	if config.ForceSubsTrack != -1 {
-		output.SubsTrack = config.ForceSubsTrack
+	if config.arguments.ForceSubsTrack != -1 {
+		output.SubsTrack = config.arguments.ForceSubsTrack
 	}
-	if VERBOSE {
+	if config.Verbose {
 		litter.Dump(output)
 	}
 	return &output, nil
@@ -291,7 +294,7 @@ func SelectTracksWithMkvMerge(path string, config Config) (*SelectedTracks, erro
 func FindInPath(exe string) (string, error) {
 	path, err := exec.LookPath(exe)
 	if err != nil {
-		fmt.Println("Could not find path")
+		fmt.Printf("Could not find %s in $PATH\n", exe)
 		return "", err
 	}
 	return path, nil

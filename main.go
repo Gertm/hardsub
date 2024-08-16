@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -23,60 +24,115 @@ import (
 	"strings"
 
 	"github.com/gertm/hardsub/subfix"
+	"github.com/gertm/watchandqueue"
 )
 
-var (
-	LastSelectedTracks *SelectedTracks
-	VERBOSE            bool
-)
+var LastSelectedTracks *SelectedTracks
+var FILEWATCH_ENCODING = false
 
 func main() {
-	config := getConfigurationFromArguments()
+	InitConfig()
+	LoadConfig()
 
-	if config.File != "" {
-		if config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
+	// Can we really start if these aren't available?
+	for _, exe := range []string{"ffmpeg", "ffprobe", "mkvmerge"} {
+		if _, err := FindInPath(exe); err != nil {
+			log.Printf("Need to have %s on $PATH to work.\n", exe)
+			return
+		}
+		if config.Verbose {
+			log.Println("✅ Found", exe)
+		}
+	}
+
+	if config.arguments.File != "" {
+		if config.arguments.OnlyCut && config.arguments.CutStart != "" && config.arguments.CutEnd != "" {
 			_, err := CutFragmentFromVideo(config)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "could not cut fragment from output: %s\n", err)
+				LogError("could not cut fragment from output: %s\n", err)
 			}
 		}
-		if config.DumpFramesAt != "" {
-			timestamps := strings.FieldsFunc(config.DumpFramesAt, func(c rune) bool { return c == ',' })
+		if config.arguments.DumpFramesAt != "" {
+			timestamps := strings.FieldsFunc(config.arguments.DumpFramesAt, func(c rune) bool { return c == ',' })
 			// ffmpeg -ss 00:01:00 -i input.mp4 -frames:v 1 output.png
-			fmt.Println(timestamps)
+			log.Println(timestamps)
 			for _, timestamp := range timestamps {
-				if name, err := DumpFrameFromVideoAt(config.File, timestamp); err != nil {
-					fmt.Fprintln(os.Stderr, name, err)
+				if name, err := DumpFrameFromVideoAt(config.arguments.File, timestamp); err != nil {
+					log.Println(name, err)
 				}
 			}
 		}
 		return
 	}
-	// TODO: rework this mess.
-	if config.WathForFiles {
-		watchForFiles(config.SourceFolder, func() error {
-			PrepareFolderForConversion(&config)
-			return ConvertAllTheThings(config)
-		})
+	if config.WatchForFiles || config.arguments.WatchForFiles {
+		// TODO: queue the files in the current folder immediately
+		Log("Watching", config.arguments.SourceDirectory, "for incoming files.")
+		ctx := context.Background()        // don't really need cancellation here.
+		incoming := make(chan string, 500) // large buffer in case we copy a whole bunch of files at once.
+		watchandqueue.Verbose = config.Verbose
+		go func() {
+			err := watchandqueue.WatchForIncomingFiles(ctx, config.arguments.SourceDirectory, ".mkv", incoming)
+			if err != nil {
+				log.Fatal("Cannot start watching for incoming files:", err)
+			}
+		}()
+		for {
+			f := <-incoming
+			if !FileExists(f) { // we're creating files in the same folder, which get moved later. (TODO: improve?)
+				Log("File not there, skipping.")
+				continue
+			}
+			detoxed := DetoxFilename(f, strings.Split(config.RemoveWords, ",")...)
+			if err := os.Rename(f, detoxed); err != nil {
+				log.Println("error renaming detoxed file:", err)
+			}
+
+			converted, err := convert_file(detoxed, config)
+			if err != nil {
+				log.Printf("Error converting file: %s: %s\n", detoxed, err)
+			} else {
+				if err := sendNotification(converted, "conversion done", &config); err != nil {
+					log.Println("sending notification failed:", err)
+				}
+			}
+		}
 	} else {
+		if config.Detox {
+			Log("Detoxing directory...")
+			detoxWords := strings.Split(config.RemoveWords, ",")
+			if err := DetoxMkvsInDirectory(config.arguments.SourceDirectory, detoxWords...); err != nil {
+				LogErrorln("Cannot detox directory?!", err)
+			}
+			Log("done.")
+		}
+		files, err := os.ReadDir(config.arguments.SourceDirectory)
+		if err != nil {
+			LogErrorln("Could not read files from", config.arguments.SourceDirectory)
+			os.Exit(1)
+		}
+		config.filesToConvert = files
 		if err := ConvertAllTheThings(config); err != nil {
-			log.Fatal(err)
+			LogErrorln("Something went wrong while converting:", err)
+			os.Exit(1)
 		}
 	}
-	fmt.Println("Done!")
+	log.Println("Done!")
 }
 
 func ConvertAllTheThings(config Config) error {
-	for _, file := range config.FilesToConvert {
+	for _, file := range config.filesToConvert {
 		if path.Ext(file.Name()) == "."+config.Extension {
 			Log("Need to convert", file.Name())
 			fullpath := file.Name()
-			_, err := convert_file(fullpath, config)
+			convertedName, err := convert_file(fullpath, config)
 			if err != nil {
 				return err
 			}
+			if err := sendNotification(convertedName, "Conversion done", &config); err != nil {
+				log.Println("error sending notification:", err)
+			}
 			if config.FirstOnly {
-				fmt.Println("Done!")
+				Log("Done!")
 				return nil
 			}
 		}
@@ -90,16 +146,17 @@ func convert_file(videofile string, config Config) (string, error) {
 	Log("Converting", videofile)
 	output, err := SelectTracksWithMkvMerge(videofile, config)
 	if err != nil {
-		log.Fatal(err)
+		LogErrorln("Could not select tracks with mkvmerge:", err)
+		os.Exit(1)
 	}
 	LastSelectedTracks = output
 	// write the script to convert.
 	noext := strings.Replace(videofile, path.Ext(videofile), "", 1)
 	var outputFile string
 	if config.Mkv {
-		outputFile = path.Join(config.TargetFolder, "HS_"+path.Base(videofile))
+		outputFile = path.Join(config.TargetDirectory, "HS_"+path.Base(videofile))
 	} else {
-		outputFile = path.Join(config.TargetFolder, strings.Replace(path.Base(videofile), ".mkv", ".mp4", 1))
+		outputFile = path.Join(config.TargetDirectory, strings.Replace(path.Base(videofile), ".mkv", ".mp4", 1))
 	}
 	baseVideoFile := path.Base(videofile)
 	var subsfile string
@@ -155,15 +212,14 @@ func convert_file(videofile string, config Config) (string, error) {
 		if config.PostSubExtract != "" {
 			postsubcmd := strings.ReplaceAll(config.PostSubExtract, "%%s", subsfile) + "\n"
 			if err := RunBashCommand(postsubcmd); err != nil {
-				fmt.Println("Post Sub Extraction Command failed, check your script?\n", err)
+				LogErrorln("Post Sub Extraction Command failed, check your script?\n", err)
 			}
 		}
 		if output.SubtitleType == SRT {
-			subfix.FixSubs(subsfile, 22, true, VERBOSE)
+			subfix.FixSubs(subsfile, 22, true, config.Verbose)
 		}
 		if config.ExtractFonts {
-			// writeExtractFontsCommand(config.TargetFolder, videofile, config.ScriptFile)
-			if err := extractFonts(config.TargetFolder, videofile); err != nil {
+			if err := extractFonts(config.TargetDirectory, videofile); err != nil {
 				return "", fmt.Errorf("error extracting subs: %w", err)
 			}
 		} // TODO: Make this entire section template based.
@@ -174,18 +230,19 @@ func convert_file(videofile string, config Config) (string, error) {
 		convertCmd := fmt.Sprintf("-y -hide_banner -loglevel error -stats -i %s -map 0:%d -map 0:%d -vf subtitles=%s -c:a %s -c:v %s -crf %d -preset %s %s%s%s",
 			videofile, output.VideoTrack, output.AudioTrack, subsfile, audioCodec, videoCodec, config.Crf, config.H26xPreset, h26xTune, oldDevices, outputFile)
 		Log("Convert Command:", "ffmpeg", convertCmd)
-		fmt.Println("Starting re-encoding...")
+		log.Println("Starting re-encoding...")
 		if err := RunAndParseFfmpeg(convertCmd, vProps); err != nil {
-			return "", fmt.Errorf("error running the conversion for %s: %w", videofile, err)
+			return "", fmt.Errorf("error running the conversion for %s: %w\nusing command: %s", videofile, err, convertCmd)
 		}
+
 	}
 	if config.FastVersion {
 		fastOutputFile := strings.ReplaceAll(outputFile, path.Base(outputFile), "FAST_"+path.Base(outputFile))
-		fmt.Println(">>>>>>>>> Creating", fastOutputFile, ">>>>>>>>>>>")
+		log.Println(">>>>>>>>> Creating", fastOutputFile, ">>>>>>>>>>>")
 		if err := FastFile(outputFile, fastOutputFile); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			if !config.KeepSlowVersion {
-				fmt.Println("Keeping normal speed version because creating the fast version failed.")
+				log.Println("Keeping normal speed version because creating the fast version failed.")
 			}
 		} else {
 			if !config.KeepSlowVersion {
@@ -195,27 +252,35 @@ func convert_file(videofile string, config Config) (string, error) {
 		}
 	}
 
-	if !config.OnlyCut && config.CutStart != "" && config.CutEnd != "" {
-		cutFile, err := CutFragmentFromVideo(config)
-		if err != nil {
-			fmt.Printf("could not cut fragment from output: %s\n", err)
+	intro, err := config.IntroFramesForFilename(outputFile)
+	if err != nil {
+		log.Println("no intro boundaries definition found for", outputFile, "  skipping...")
+	} else {
+		nointroFile, err := cutFragmentFromVideo(outputFile, intro.Begin, intro.End)
+		if err == nil {
+			outputFile = nointroFile
 		} else {
-			outputFile = cutFile
+			Log("Error while intro cutting:", err)
 		}
 	}
 
 	if config.PostCmd != "" {
+		Log("Running postcmd...")
 		postcommand := strings.ReplaceAll(config.PostCmd, "%%o", outputFile)
 		if err := RunBashCommand(postcommand); err != nil {
-			fmt.Println("Post command failed, check your script?\n", err)
+			log.Println("Post command failed, check your script?\n", err)
 		}
 	}
 
-	if config.OriginalsFolder != config.TargetFolder {
-		if err := createDirectoryIfNeeded(config.OriginalsFolder); err == nil {
-			movedFile := path.Join(config.OriginalsFolder, baseVideoFile)
-			os.Rename(videofile, movedFile)
+	if config.OriginalsDirectory != config.TargetDirectory {
+		if err := createDirectoryIfNeeded(config.OriginalsDirectory); err == nil {
+			movedFile := path.Join(config.OriginalsDirectory, baseVideoFile)
+			rerr := os.Rename(videofile, movedFile)
+			if rerr != nil {
+				log.Println("error renaming videofile:", err)
+			}
 		}
 	}
+	Log("Done conversion of ", videofile, "->", outputFile)
 	return outputFile, nil
 }

@@ -16,141 +16,137 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/sanity-io/litter"
 )
 
+type IntroBoundaries struct {
+	Begin string
+	End   string
+}
+
+type Arguments struct {
+	SourceDirectory string `koanf:"sourcedir"`
+	CutStart        string `koanf:"cutstart"`
+	CutEnd          string `koanf:"cutend"`
+	OnlyCut         bool   `koanf:"onlycut"`
+	DumpFramesAt    string `koanf:"dumpframesat"`
+	File            string `koanf:"file"`
+	ForceAudioTrack int    `koanf:"forceaudiotrack"`
+	ForceSubsTrack  int    `koanf:"forcesubstrack"`
+	WatchForFiles   bool   `koanf:"watchforfiles"`
+}
+
 type Config struct {
-	AudioLang       string
-	ScriptPath      string
-	SubsLang        string
-	SubsName        string
-	TargetFolder    string
-	OriginalsFolder string
-	H26xTune        string
-	H26xPreset      string
-	PostCmd         string
-	PostSubExtract  string
-	Extension       string
-	RemoveWords     string
-	SourceFolder    string
-	FilesToConvert  []fs.DirEntry
-	Crf             int
-	ScpPort         int
-	ExtractFonts    bool
-	FirstOnly       bool
-	Mkv             bool
-	H265            bool
-	RunDirectly     bool
-	KeepSubs        bool
-	CleanupSubs     bool
-	Verbose         bool
-	ForOldDevices   bool
-	FastVersion     bool
-	KeepSlowVersion bool
-	Detox           bool
-	CutStart        string
-	CutEnd          string
-	OnlyCut         bool
-	DumpFramesAt    string
-	File            string
-	ForceAudioTrack int
-	ForceSubsTrack  int
-	WathForFiles    bool
+	AudioLang          string `koanf:"audiolang" toml:"audiolang" comment:"The audio language you want to use in the ouput video. (IETF language tag)"`
+	SubsLang           string `koanf:"subslang" toml:"subslang" comment:"The subs language you want to use. (IETF language tag)"`
+	SubsName           string `koanf:"subsname" toml:"subsname" comment:"What the subtitle trackname needs to contains."`
+	TargetDirectory    string `koanf:"targetdir" toml:"targetdir" comment:"Where to put the converted videos."`
+	OriginalsDirectory string `koanf:"originalsdir" toml:"originalsdir" comment:"Where to move the original files to."`
+	H26xTune           string `koanf:"h26xtune" toml:"h26xtune" comment:"The tuning to use for h26x encoding. (film/animation/fastdecode/zerolatency/none)"`
+	H26xPreset         string `koanf:"h26xpreset" toml:"h26xpreset" comment:"The preset to use for h26x encoding. (fast/medium/slow/etc..)"`
+	PostCmd            string `koanf:"postcmd" toml:"postcmd" comment:"The command to run on completion. Use %%o for the output filename."`
+	PostSubExtract     string `koanf:"postsubextract" toml:"postsubextract" comment:"The command to run after sub extraction, before conversion. Use %%s for subs filename."`
+	Extension          string `koanf:"extension" toml:"extension" comment:"Look for files of this extension to convert. (You really want to set this to mkv)"`
+	RemoveWords        string `koanf:"removewords" toml:"removewords" comment:"When detoxing, remove the words in the comma separated value you specify."`
+	filesToConvert     []fs.DirEntry
+	Crf                int                        `koanf:"crf" toml:"crf" comment:"Constant Rate Factor setting for ffmpeg."`
+	ExtractFonts       bool                       `koanf:"extractfonts" toml:"extractfonts" comment:"Extract the fonts from the mkv to use them in the hardcoding."`
+	FirstOnly          bool                       `koanf:"firstonly" toml:"firstonly" comment:"Only convert the first file. (For testing purposes)"`
+	Mkv                bool                       `koanf:"mkv" toml:"mkv" comment:"Make MKV files instead of MP4 files."`
+	H265               bool                       `koanf:"h265" toml:"h265" comment:"Use H265 encoding. Check if your CPU can do H265 encoding first, or this will be very slow."`
+	KeepSubs           bool                       `koanf:"keepsubs" toml:"keepsubs" comment:"Keep subs in the directory after conversion instead of deleting them."`
+	CleanupSubs        bool                       `koanf:"cleanupsubs" toml:"cleanupsubs" comment:"Clean up the subtitles (in the case of srt) to make them render better. Sometimes they render too big, use this in that case."`
+	Verbose            bool                       `koanf:"verbose" toml:"verbose" comment:"Give more output about what's going on."`
+	ForOldDevices      bool                       `koanf:"forolddevices" toml:"forolddevices" comment:"Use ffmpeg flags to get widest compatibility. (yuv stuff)"`
+	FastVersion        bool                       `koanf:"fastversion" toml:"fastversion" comment:"Do a second and third pass, making a video at 1.5x the speed."`
+	KeepSlowVersion    bool                       `koanf:"keepslowversion" toml:"keepslowversion" comment:"When making a fast version, don't delete the slow one."`
+	Detox              bool                       `koanf:"detox" toml:"detox" comment:"Remove all 'weird' characters from the filename. (you want this)"`
+	WatchForFiles      bool                       `koanf:"watchforfiles" toml:"watchforfiles" comment:"Watch for files in the directory and convert them as they appear."`
+	IntroFrames        map[string]IntroBoundaries `koanf:"introframes" toml:"introframes" comment:"The locations of the intro beginning and ending frames for specific series."`
+	PushoverToken      string                     `koanf:"pushovertoken" toml:"pushovertoken" comment:"The Pushover token."`
+	PushoverUserKey    string                     `koanf:"pushoveruserkey" toml:"pushoveruserkey" comment:"The Pushover User Key"`
+	arguments          Arguments                  `koanf:"arguments"`
 }
 
-func getConfigurationFromArguments() Config {
-	config := Config{}
-	workdir, _ := os.Getwd()
-	proposedConvertedDir := path.Join(workdir, "converted")
-	flag.StringVar(&config.SourceFolder, "folder", workdir, "The folder to convert all mkvs in. Defaults to the working directory.")
-	flag.BoolVar(&config.Detox, "detox", true, "Detox the mkv files in the directory first.")
-	flag.StringVar(&config.RemoveWords, "removewords", "SubsPlease,EMBER", "Remove the words in the comma separated value you specify.")
-	flag.StringVar(&config.Extension, "ext", "mkv", "Look for files of this extension to convert.")
-	flag.StringVar(&config.SubsLang, "subslang", "en", "The subs language you want to use. (IETF language tag)")
-	flag.StringVar(&config.SubsName, "subsname", "subtitles", "What the subs name needs to contains.")
-	flag.StringVar(&config.AudioLang, "audiolang", "ja", "The audio language you want to use. (IETF language tag)")
-	flag.StringVar(&config.TargetFolder, "outputfolder", proposedConvertedDir, "The folder to put the converted videos in.")
-	flag.StringVar(&config.OriginalsFolder, "move-originals-to", "originals", "The alternative folder you want the originals moved to.")
-	flag.BoolVar(&config.KeepSubs, "keepsubs", false, "Keep subs in the folder after conversion instead of deleting them.")
-	flag.BoolVar(&config.CleanupSubs, "cleansubs", false, "Clean up the subtitles (in the case of srt) to make them render better.")
-	flag.BoolVar(&config.ExtractFonts, "extract-fonts", true, "Extract the fonts from the mkv to use them in the hardcoding.")
-	flag.BoolVar(&config.Verbose, "v", false, "Show verbose output.")
-	flag.IntVar(&config.Crf, "crf", 18, "Constant Rate Factor setting for ffmpeg.")
-	flag.BoolVar(&config.FirstOnly, "first-only", false, "Only convert the first file. (For testing purposes)")
-	flag.BoolVar(&config.ForOldDevices, "for-old-devices", false, "Use ffmpeg flags to get widest compatibility.")
-	flag.BoolVar(&config.FastVersion, "fastversion", false, "Do a second and third pass, making a video at 1.5x the speed.")
-	flag.BoolVar(&config.KeepSlowVersion, "keep-slow", false, "In case you're making fast versions, keep the slow versions as well.")
-	flag.BoolVar(&config.Mkv, "mkv", false, "Make MKV files instead of MP4 files.")
-	flag.StringVar(&config.PostCmd, "postcmd", "", "The command to run on completion. Use %%o for the output filename.")
-	flag.StringVar(&config.PostSubExtract, "postsubextract", "", "The command to run after sub extraction, before conversion. Use %%s for subs filename.")
-	flag.StringVar(&config.H26xTune, "h26x-tune", "animation", "The tuning to use for h26x encoding. (film/animation/fastdecode/zerolatency/none)")
-	flag.StringVar(&config.H26xPreset, "h26x-preset", "fast", "The preset to use for h26x encoding. (fast/medium/slow/etc..)")
-	flag.BoolVar(&config.H265, "h265", false, "Use H265 encoding.")
-	flag.StringVar(&config.File, "file", "", "The specific file to operate on for cutting and frame dumping.")
-	flag.BoolVar(&config.OnlyCut, "onlycut", false, "Only cut, don't convert.")
-	flag.BoolVar(&config.WathForFiles, "watch", false, "Watch for files in the folder and convert them as they appear.")
-	flag.StringVar(&config.CutStart, "cutstart", "", "A jpg of the frame to look for in the video to determine the start of the fragment to cut out.")
-	flag.StringVar(&config.CutEnd, "cutend", "", "A jpg of the frame to look for in the video to determine the end of the fragment to cut out.")
-	flag.StringVar(&config.DumpFramesAt, "dumpframesat", "", "A comma-separated list of timestamps you want to make jpg dumps for.")
-	flag.IntVar(&config.ForceAudioTrack, "force-audio-track", -1, "Force the audio track to use. (for example: 4)")
-	flag.IntVar(&config.ForceSubsTrack, "force-subs-track", -1, "Force the subs track to use. (for example: 3)")
-	flag.Usage = func() {
-		fmt.Fprintln(os.Stderr, `
- This tool is for converting mkv files to an mp4 that has the subs hardcoded into the video.
- For when your television doesn't like the subs in the mkv and doesn't want to display them, or
- displays them too quickly...
- 
- Available options:
- `)
-		flag.PrintDefaults()
+func (c Config) FfmpegParametersForCutting(inputFile, outputFile string) string {
+	sb := strings.Builder{}
+	sb.WriteString("-y -hide_banner -loglevel error -stats -i ")
+	sb.WriteString(inputFile)
+	sb.WriteString(" -c:a aac")
+	videoCodec := "libx264"
+	if config.H265 {
+		videoCodec = "libx265"
 	}
+	sb.WriteString(" -c:v " + videoCodec)
+	sb.WriteString(fmt.Sprintf(" -crf %d", config.Crf))
+	h26xTune := ""
+	if config.H26xTune == "none" {
+		h26xTune = ""
+	} else {
+		h26xTune = " -tune " + config.H26xTune + " "
+	}
+	sb.WriteString(h26xTune)
+	sb.WriteString(" -preset " + config.H26xPreset)
 
-	flag.Parse()
-	VERBOSE = config.Verbose
-	// TODO: this should not be in this function, it doesn't belong here.
-	// this should be done before we get which files we need to convert though.
+	if config.ForOldDevices {
+		sb.WriteString(" -profile:v baseline -level 3.0 -pix_fmt yuv420p -ac 2 -b:a 128k -movflags faststart ")
+	}
+	sb.WriteString(outputFile)
+	// convertCmd := fmt.Sprintf("-y -hide_banner -loglevel error -stats -i %s -map 0:%d -map 0:%d -vf subtitles=%s -c:a %s -c:v %s -crf %d -preset %s %s%s%s",
+	// 	videofile, output.VideoTrack, output.AudioTrack, subsfile, audioCodec, videoCodec, config.Crf, config.H26xPreset, h26xTune, oldDevices, outputFile)
+	return sb.String()
+}
+
+func DefaultConfig() Config {
+	return Config{
+		AudioLang:          "ja",
+		SubsLang:           "en",
+		SubsName:           "subtitles",
+		TargetDirectory:    "converted",
+		OriginalsDirectory: "originals",
+		H26xTune:           "animation",
+		H26xPreset:         "fast",
+		PostCmd:            "",
+		PostSubExtract:     "",
+		Extension:          "mkv",
+		RemoveWords:        "SubsPlease,EMBER",
+		Crf:                18,
+		ExtractFonts:       true,
+		FirstOnly:          false,
+		Mkv:                false,
+		H265:               false,
+		KeepSubs:           false,
+		CleanupSubs:        false,
+		Verbose:            false,
+		ForOldDevices:      false,
+		FastVersion:        false,
+		KeepSlowVersion:    false,
+		Detox:              true,
+		WatchForFiles:      false,
+	}
+}
+
+func PrepareDirectoryForConversion(config *Config) {
 	if config.Detox {
-		fmt.Print("Detoxing folder...")
+		fmt.Print("Detoxing directory...")
 		detoxWords := strings.Split(config.RemoveWords, ",")
-		if err := DetoxMkvsInFolder(config.SourceFolder, detoxWords...); err != nil {
-			log.Fatal("Cannot detox folder?!", err)
+		if err := DetoxMkvsInDirectory(config.arguments.SourceDirectory, detoxWords...); err != nil {
+			LogError("detoxing directory failed: %s %v", config.arguments.SourceDirectory, err)
+			os.Exit(1)
 		}
 		fmt.Print("done.\n")
 	}
-	files, err := os.ReadDir(config.SourceFolder)
+	files, err := os.ReadDir(config.arguments.SourceDirectory)
 	if err != nil {
-		log.Fatal(err)
+		LogError("cannot read directory: %s %v", config.arguments.SourceDirectory, err)
 	}
-	config.FilesToConvert = files
-	if VERBOSE {
-		litter.Dump(config)
-	}
-	return config
-}
-
-func PrepareFolderForConversion(config *Config) {
-	if config.Detox {
-		fmt.Print("Detoxing folder...")
-		detoxWords := strings.Split(config.RemoveWords, ",")
-		if err := DetoxMkvsInFolder(config.SourceFolder, detoxWords...); err != nil {
-			log.Fatal("Cannot detox folder?!", err)
-		}
-		fmt.Print("done.\n")
-	}
-	files, err := os.ReadDir(config.SourceFolder)
-	if err != nil {
-		log.Fatal(err)
-	}
-	config.FilesToConvert = files
-	if VERBOSE {
+	config.filesToConvert = files
+	if config.Verbose {
 		litter.Dump(config)
 	}
 }

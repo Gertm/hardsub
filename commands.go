@@ -28,17 +28,12 @@ func addEnvironment(c *exec.Cmd, envStr string) {
 	c.Env = append(os.Environ(), envStr)
 }
 
-func setDefaultEnvironment(c *exec.Cmd) {
-	addEnvironment(c, "DISPLAY=:0")
-}
-
 func ExecuteCommand(cmd string) error {
 	parts, err := SplitCommand(cmd)
 	if err != nil {
 		return err
 	}
 	c := exec.Command(parts[0], parts[1:]...)
-	setDefaultEnvironment(c)
 	return c.Run()
 }
 
@@ -67,7 +62,6 @@ func OutputForCommand(cmd string) (string, error) {
 
 func OutputForCommandLst(cmd []string) (string, error) {
 	c := exec.Command(cmd[0], cmd[1:]...)
-	setDefaultEnvironment(c)
 	raw, err := c.Output()
 	if err != nil {
 		return "", err
@@ -80,11 +74,10 @@ func OutputForCommandLst2(cmd ...string) (string, error) {
 }
 
 func OutputForBashCommand(cmd string) (string, error) {
-	if VERBOSE {
+	if config.Verbose {
 		fmt.Println("bash -c", cmd)
 	}
 	c := exec.Command("bash", "-c", cmd)
-	setDefaultEnvironment(c)
 	raw, err := c.Output()
 	if err != nil {
 		return "", err
