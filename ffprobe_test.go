@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"testing"
-
-	"github.com/sanity-io/litter"
 )
 
 func TestGetFFprobeInfo(t *testing.T) {
@@ -12,8 +10,13 @@ func TestGetFFprobeInfo(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	litter.Dump(got)
 	for _, stream := range got.Streams {
 		fmt.Printf("Stream: %s\n", stream.CodecType)
+		lang, err := stream.GetLanguage()
+		if err != nil {
+			continue
+		}
+		fmt.Printf("Stream language: %s\n", lang)
 	}
+	got.ShowSubtitles()
 }

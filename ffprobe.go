@@ -3,17 +3,17 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"time"
+	"strings"
 )
 
 var ffprobe_cmdline string = "ffprobe -v quiet -print_format json -show_format -show_streams "
 
-func GetFFprobeInfo(filename string) (*FfprobeOutput, error) {
+func GetFFprobeInfo(filename string) (*VideoProbeInfo, error) {
 	output, err := OutputBytesForCommand(ffprobe_cmdline + filename)
 	if err != nil {
 		return nil, err
 	}
-	var result FfprobeOutput
+	var result VideoProbeInfo
 	err = json.Unmarshal(output, &result)
 	if err != nil {
 		return nil, fmt.Errorf("could not unmarshal ffprobe output: %w", err)
@@ -21,10 +21,24 @@ func GetFFprobeInfo(filename string) (*FfprobeOutput, error) {
 	return &result, nil
 }
 
-type FfprobeOutput struct {
+type VideoProbeInfo struct {
 	Streams  []Stream  `json:"streams"`
 	Format   Format    `json:"format"`
 	Chapters []Chapter `json:"chapters"`
+}
+
+func (vpi VideoProbeInfo) ShowSubtitles() {
+	for _, stream := range vpi.Streams {
+		if stream.IsSubtitle() {
+			fmt.Printf("CodecName: %s, CodecTagString: %s, CodecTag: %s\n", stream.CodecName, stream.CodecTagString, stream.CodecTag)
+			if lang, ok := stream.Tags["language"]; ok {
+				fmt.Println("  Language:", lang)
+			}
+			if title, ok := stream.Tags["title"]; ok {
+				fmt.Println("Subs title:", title)
+			}
+		}
+	}
 }
 
 type Stream struct {
@@ -83,31 +97,48 @@ type Stream struct {
 	} `json:"disposition"`
 	Tags map[string]string `json:"tags"`
 }
+
+func (stream Stream) GetLanguage() (string, error) {
+	for k, v := range stream.Tags {
+		if strings.TrimSpace(strings.ToLower(k)) == "language" {
+			return v, nil
+		}
+	}
+	return "", fmt.Errorf("no language tag found in this stream")
+}
+
+func (stream Stream) IsSubtitle() bool {
+	return stream.CodecType == "subtitle"
+}
+
+func (stream Stream) IsVideo() bool {
+	return stream.CodecType == "video"
+}
+
+func (stream Stream) IsAudio() bool {
+	return stream.CodecType == "video"
+}
+
 type Format struct {
-	Filename       string `json:"filename"`
-	NbStreams      int    `json:"nb_streams"`
-	NbPrograms     int    `json:"nb_programs"`
-	FormatName     string `json:"format_name"`
-	FormatLongName string `json:"format_long_name"`
-	StartTime      string `json:"start_time"`
-	Duration       string `json:"duration"`
-	Size           string `json:"size"`
-	BitRate        string `json:"bit_rate"`
-	ProbeScore     int    `json:"probe_score"`
-	Tags           struct {
-		Encoder      string    `json:"encoder"`
-		CreationTime time.Time `json:"creation_time"`
-	} `json:"tags"`
+	Filename       string            `json:"filename"`
+	NbStreams      int               `json:"nb_streams"`
+	NbPrograms     int               `json:"nb_programs"`
+	FormatName     string            `json:"format_name"`
+	FormatLongName string            `json:"format_long_name"`
+	StartTime      string            `json:"start_time"`
+	Duration       string            `json:"duration"`
+	Size           string            `json:"size"`
+	BitRate        string            `json:"bit_rate"`
+	ProbeScore     int               `json:"probe_score"`
+	Tags           map[string]string `json:"tags"`
 }
 
 type Chapter struct {
-	ID        int    `json:"id"`
-	TimeBase  string `json:"time_base"`
-	Start     int    `json:"start"`
-	StartTime string `json:"start_time"`
-	End       int64  `json:"end"`
-	EndTime   string `json:"end_time"`
-	Tags      struct {
-		Title string `json:"title"`
-	} `json:"tags"`
+	ID        int               `json:"id"`
+	TimeBase  string            `json:"time_base"`
+	Start     int               `json:"start"`
+	StartTime string            `json:"start_time"`
+	End       int64             `json:"end"`
+	EndTime   string            `json:"end_time"`
+	Tags      map[string]string `json:"tags"`
 }
