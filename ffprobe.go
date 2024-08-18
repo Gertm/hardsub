@@ -27,6 +27,12 @@ type VideoProbeInfo struct {
 	Chapters []Chapter `json:"chapters"`
 }
 
+type Subtitle struct {
+	Index    int
+	Title    string
+	Language string
+}
+
 func (vpi VideoProbeInfo) ShowSubtitles() {
 	for _, stream := range vpi.Streams {
 		if stream.IsSubtitle() {
