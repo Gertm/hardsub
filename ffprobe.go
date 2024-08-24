@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-var ffprobe_cmdline string = "ffprobe -v quiet -print_format json -show_format -show_streams "
+var ffprobe_cmdline string = "ffprobe -v quiet -print_format json -show_format -show_streams -show_chapters "
 
 func GetFFprobeInfo(filename string) (*VideoProbeInfo, error) {
 	output, err := OutputBytesForCommand(ffprobe_cmdline + filename)
@@ -44,6 +44,13 @@ func (vpi VideoProbeInfo) ShowSubtitles() {
 				fmt.Println("Subs title:", title)
 			}
 		}
+	}
+}
+
+func (vpi VideoProbeInfo) ShowChapters() {
+	fmt.Printf("Chapter count: %d\n", len(vpi.Chapters))
+	for _, chapter := range vpi.Chapters {
+		fmt.Println(chapter)
 	}
 }
 
