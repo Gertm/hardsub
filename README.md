@@ -1,3 +1,7 @@
+# This project is now obsolete.
+I no longer need this since I bought an Apple TV which displays all my content flawlessly.  
+Leaving the project here for reference. Don't copy/paste too much from here, the code is not great. But it does work!
+
 # hardsub
 
 This is an FFmpeg command generator and runner for burning subs into videos.  
